@@ -298,6 +298,68 @@ const transitionFilter = (transition: Scene["transition"], localFrame: number) =
   return `blur(${blur}px)`;
 };
 
+const cameraPower = {
+  subtle: 1,
+  medium: 1.65,
+  strong: 2.35,
+} satisfies Record<Scene["camera"]["intensity"], number>;
+
+const cameraOrigin = {
+  headline: "32% 44%",
+  visual: "72% 52%",
+  stat: "72% 56%",
+  center: "50% 50%",
+  left: "28% 50%",
+  right: "72% 50%",
+} satisfies Record<Scene["camera"]["focus"], string>;
+
+const cameraTransform = (scene: Scene, localFrame: number) => {
+  const power = cameraPower[scene.camera.intensity];
+  const slow = interpolate(localFrame, [0, scene.durationSeconds * FPS], [0, 1], {
+    extrapolateLeft: "clamp",
+    extrapolateRight: "clamp",
+  });
+  const pop = interpolate(localFrame, [0, 16, 36], [0, 1, 0.72], {
+    extrapolateLeft: "clamp",
+    extrapolateRight: "clamp",
+  });
+  const wobble = Math.sin(localFrame / 9) * power;
+
+  if (scene.camera.move === "push-in") {
+    return `scale(${1 + slow * 0.055 * power})`;
+  }
+
+  if (scene.camera.move === "pull-back") {
+    return `scale(${1.08 + (1 - slow) * 0.035 * power})`;
+  }
+
+  if (scene.camera.move === "pan-left") {
+    return `scale(${1 + 0.025 * power}) translateX(${slow * -34 * power}px)`;
+  }
+
+  if (scene.camera.move === "pan-right") {
+    return `scale(${1 + 0.025 * power}) translateX(${slow * 34 * power}px)`;
+  }
+
+  if (scene.camera.move === "tilt-up") {
+    return `scale(${1 + 0.018 * power}) translateY(${(1 - slow) * 30 * power}px)`;
+  }
+
+  if (scene.camera.move === "focus-pop") {
+    return `scale(${1 + pop * 0.075 * power})`;
+  }
+
+  if (scene.camera.move === "orbit") {
+    return `scale(${1 + 0.02 * power}) translate(${Math.sin(slow * Math.PI * 2) * 18 * power}px, ${Math.cos(slow * Math.PI * 2) * 12 * power}px) rotate(${Math.sin(slow * Math.PI * 2) * 0.8 * power}deg)`;
+  }
+
+  if (scene.camera.move === "handheld") {
+    return `scale(${1 + 0.025 * power}) translate(${wobble}px, ${Math.cos(localFrame / 11) * power}px) rotate(${Math.sin(localFrame / 17) * 0.18 * power}deg)`;
+  }
+
+  return "none";
+};
+
 const Visual = ({scene, index}: {scene: Scene; index: number}) => {
   if (scene.visualType === "kinetic-text") {
     return <KineticWords scene={scene} />;
@@ -380,6 +442,10 @@ const SceneCard = ({
     extrapolateLeft: "clamp",
     extrapolateRight: "clamp",
   }) : 0;
+  const cameraStyle = {
+    transform: cameraTransform(scene, localFrame),
+    transformOrigin: cameraOrigin[scene.camera.focus],
+  } satisfies CSSProperties;
 
   return (
     <section
@@ -391,17 +457,19 @@ const SceneCard = ({
         filter: transitionFilter(scene.transition, localFrame),
       }}
     >
-      <ShapeBackdrop scene={scene} />
-      <div className="sceneMeta">
-        <span>{scene.eyebrow}</span>
-        <span>{sceneIcons[scene.visualType]}</span>
-      </div>
-      <div className="sceneGrid">
-        <div className="copy">
-          <h1>{scene.headline}</h1>
-          <p>{scene.body}</p>
+      <div className="cameraLayer" style={cameraStyle}>
+        <ShapeBackdrop scene={scene} />
+        <div className="sceneMeta">
+          <span>{scene.eyebrow}</span>
+          <span>{sceneIcons[scene.visualType]}</span>
         </div>
-        <Visual scene={scene} index={index} />
+        <div className="sceneGrid">
+          <div className="copy">
+            <h1>{scene.headline}</h1>
+            <p>{scene.body}</p>
+          </div>
+          <Visual scene={scene} index={index} />
+        </div>
       </div>
     </section>
   );

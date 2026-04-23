@@ -259,6 +259,9 @@ const api = createServer(async (request, response) => {
 
     if (request.url === "/api/storyboard" && request.method === "POST") {
       const body = await readJsonBody(request);
+      const llmProvider = body.llm?.provider ?? "mock";
+      const ollamaModel = body.llm?.ollamaModel ?? "qwen3:0.6b";
+      const ollamaUrl = body.llm?.ollamaUrl ?? "http://localhost:11434";
       const args = [
         "node_modules/tsx/dist/cli.mjs",
         "scripts/create-storyboard.ts",
@@ -267,6 +270,9 @@ const api = createServer(async (request, response) => {
         `--tone=${body.tone ?? "bold"}`,
         `--aspect=${body.aspectRatio ?? "16:9"}`,
         `--sources=${body.sources ?? ""}`,
+        `--llm-provider=${llmProvider}`,
+        `--ollama-model=${ollamaModel}`,
+        `--ollama-url=${ollamaUrl}`,
       ];
 
       await runNode(args);

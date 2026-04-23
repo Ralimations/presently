@@ -51,9 +51,26 @@ Generated files stay inside the project under:
 2. The prompt is refined into `refinedPrompt.sitePrompt`, `refinedPrompt.musicPrompt`, and `refinedPrompt.renderBrief`.
 3. The music prompt is sent to the music provider seam.
 4. The site prompt becomes a structured Remotion storyboard with scene pages, layout variants, transitions, motion presets, copy, and chart data.
-5. Remotion combines the trusted scene plan and generated music asset into the final video.
+5. Each scene can include schema-controlled camera direction such as push-in, pan, tilt, focus-pop, orbit, or pull-back.
+6. Remotion combines the trusted scene plan and generated music asset into the final video.
 
 Users do not need to edit individual pages. Settings are only for high-level defaults such as audience, tone, aspect ratio, refined prompts, and output paths.
+
+## Local LLM
+
+The app can use the built-in deterministic generator or a local Ollama model from the Settings tab. For a low-requirement laptop model:
+
+```powershell
+.\install_local_llm.ps1
+```
+
+Then set:
+
+- Provider: `Ollama local`
+- Model: `qwen3:0.6b`
+- API URL: `http://localhost:11434`
+
+Ollama output is parsed as JSON and validated against the storyboard schema. If the model is offline or returns invalid JSON, the app falls back to the built-in generator.
 
 ## Remotion Integration
 

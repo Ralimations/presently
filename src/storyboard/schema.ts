@@ -136,11 +136,17 @@ export const sceneSchema = z.object({
   visualType: z.enum(visualTypes),
   layout: z.enum(layoutTypes),
   motion: z.enum(motionTypes),
-  camera: z.object({
-    move: z.enum(cameraMoves),
-    focus: z.enum(cameraFocuses),
-    intensity: z.enum(cameraIntensities),
-  }),
+  camera: z
+    .object({
+      move: z.enum(cameraMoves),
+      focus: z.enum(cameraFocuses),
+      intensity: z.enum(cameraIntensities),
+    })
+    .default({
+      move: "push-in",
+      focus: "center",
+      intensity: "subtle",
+    }),
   transition: z.enum(transitionTypes),
   template: z.enum(templateTypes),
   symbol: z.enum(symbolNames),

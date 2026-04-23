@@ -48,6 +48,12 @@ type PerformanceSettings = {
   renderScale: number;
 };
 
+type LlmSettings = {
+  provider: "mock" | "ollama";
+  ollamaModel: string;
+  ollamaUrl: string;
+};
+
 const initialInput: StoryboardInput = {
   topic: "AI-generated one-minute explainers",
   audience: "founders and content teams",
@@ -60,6 +66,7 @@ const initialStoryboard = generateStoryboard(initialInput);
 const storageKeys = {
   generation: "presently:generation-settings",
   performance: "presently:performance-settings",
+  llm: "presently:llm-settings",
 };
 
 const loadStoredSettings = <Settings,>(key: string, fallback: Settings): Settings => {
@@ -189,6 +196,13 @@ const App = () => {
       renderScale: 1,
     }),
   );
+  const [llmSettings, setLlmSettings] = useState<LlmSettings>(() =>
+    loadStoredSettings(storageKeys.llm, {
+      provider: "mock",
+      ollamaModel: "qwen3:0.6b",
+      ollamaUrl: "http://localhost:11434",
+    }),
+  );
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       id: 1,
@@ -274,6 +288,10 @@ const App = () => {
     window.localStorage.setItem(storageKeys.performance, JSON.stringify(performanceSettings));
   }, [performanceSettings]);
 
+  useEffect(() => {
+    window.localStorage.setItem(storageKeys.llm, JSON.stringify(llmSettings));
+  }, [llmSettings]);
+
   const generateFromPrompt = async () => {
     if (!prompt.trim()) {
       return;
@@ -296,7 +314,10 @@ const App = () => {
     try {
       const response = await postJson<{storyboard: Storyboard}>(
         "/api/storyboard",
-        nextInput,
+        {
+          ...nextInput,
+          llm: llmSettings,
+        },
       );
       applyStoryboard(response.storyboard);
       setMessages((current) => [
@@ -306,7 +327,9 @@ const App = () => {
           id: Date.now() + 1,
           role: "assistant",
           content:
-            "Generated the pages, layouts, transitions, copy, and music prompt automatically. Preview it or render the MP4.",
+            llmSettings.provider === "ollama"
+              ? `Generated with local Ollama model ${llmSettings.ollamaModel}, then validated for Remotion.`
+              : "Generated the pages, layouts, transitions, copy, and music prompt automatically. Preview it or render the MP4.",
         },
       ]);
       setPrompt("");
@@ -666,6 +689,8 @@ const App = () => {
                 <code>{[...new Set(storyboard.scenes.map((scene) => scene.layout))].join(", ")}</code>
                 <span>Motion</span>
                 <code>{[...new Set(storyboard.scenes.map((scene) => scene.motion))].join(", ")}</code>
+                <span>Camera</span>
+                <code>{[...new Set(storyboard.scenes.map((scene) => scene.camera.move))].join(", ")}</code>
                 <span>Transitions</span>
                 <code>{[...new Set(storyboard.scenes.map((scene) => scene.transition))].join(", ")}</code>
                 <span>Storyboard</span>
@@ -726,6 +751,54 @@ const App = () => {
                   <option value={1}>Final</option>
                 </select>
               </label>
+            </div>
+            <div className="editorCard">
+              <p className="eyebrow">Local LLM</p>
+              <label>
+                Provider
+                <select
+                  value={llmSettings.provider}
+                  onChange={(event) =>
+                    setLlmSettings((current) => ({
+                      ...current,
+                      provider: event.target.value as LlmSettings["provider"],
+                    }))
+                  }
+                >
+                  <option value="mock">Built-in generator</option>
+                  <option value="ollama">Ollama local</option>
+                </select>
+              </label>
+              <label>
+                Ollama model
+                <input
+                  value={llmSettings.ollamaModel}
+                  onChange={(event) =>
+                    setLlmSettings((current) => ({
+                      ...current,
+                      ollamaModel: event.target.value,
+                    }))
+                  }
+                  placeholder="qwen3:0.6b"
+                />
+              </label>
+              <label>
+                Ollama API URL
+                <input
+                  value={llmSettings.ollamaUrl}
+                  onChange={(event) =>
+                    setLlmSettings((current) => ({
+                      ...current,
+                      ollamaUrl: event.target.value,
+                    }))
+                  }
+                  placeholder="http://localhost:11434"
+                />
+              </label>
+              <p className="helperText">
+                Install Ollama separately, then run <code>ollama pull qwen3:0.6b</code>.
+                Invalid LLM output falls back to the built-in generator.
+              </p>
             </div>
             <div className="editorCard">
               <p className="eyebrow">Project history</p>
