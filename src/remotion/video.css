@@ -400,6 +400,247 @@
   line-height: 0.5;
 }
 
+.kineticWords {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 18px;
+  align-content: center;
+}
+
+.kineticWords span {
+  padding: 18px 24px;
+  border: 3px solid var(--fg);
+  border-radius: 999px;
+  background: var(--accent);
+  color: var(--bg);
+  font-family: "Oswald Variable", Impact, sans-serif;
+  font-size: clamp(34px, 4vw, 76px);
+  text-transform: uppercase;
+}
+
+.diagram {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 26px;
+}
+
+.diagramNode {
+  position: relative;
+  display: grid;
+  gap: 16px;
+  min-height: 210px;
+  padding: 28px;
+  border: 3px solid color-mix(in srgb, var(--fg) 42%, transparent);
+  border-radius: 30px;
+  background: color-mix(in srgb, var(--bg) 72%, white 12%);
+}
+
+.diagramNode .symbolMark {
+  width: 74px;
+  height: 74px;
+  border-radius: 24px;
+  background: var(--accent);
+  color: var(--bg);
+}
+
+.diagramNode strong {
+  align-self: end;
+  font-family: "Space Grotesk Variable", Verdana, sans-serif;
+  font-size: clamp(28px, 3vw, 56px);
+  text-transform: uppercase;
+}
+
+.connector {
+  position: absolute;
+  right: -30px;
+  top: 50%;
+  width: 34px;
+  height: 3px;
+  background: var(--accent);
+}
+
+.statWall {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+}
+
+.statTile {
+  display: grid;
+  place-items: center;
+  min-height: 190px;
+  padding: 22px;
+  border-radius: 28px;
+  background: var(--fg);
+  color: var(--bg);
+}
+
+.statTile strong {
+  font-family: "Oswald Variable", Impact, sans-serif;
+  font-size: clamp(64px, 8vw, 142px);
+  line-height: 0.8;
+}
+
+.statTile span {
+  color: var(--accent);
+  font-size: clamp(22px, 2vw, 36px);
+  text-transform: uppercase;
+}
+
+.beforeAfter,
+.mythFact {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 22px;
+}
+
+.beforeAfter div,
+.mythFact div {
+  display: grid;
+  align-content: space-between;
+  min-height: 430px;
+  padding: 34px;
+  border-radius: 34px;
+  border: 3px solid color-mix(in srgb, var(--fg) 30%, transparent);
+}
+
+.beforeAfter div:last-child,
+.mythFact div:last-child {
+  background: var(--accent);
+  color: var(--bg);
+}
+
+.beforeAfter span,
+.mythFact span {
+  font-family: "JetBrains Mono Variable", Consolas, monospace;
+  font-size: clamp(20px, 2vw, 34px);
+  text-transform: uppercase;
+}
+
+.beforeAfter strong,
+.mythFact strong {
+  font-family: "Space Grotesk Variable", Verdana, sans-serif;
+  font-size: clamp(40px, 5vw, 88px);
+  line-height: 0.92;
+}
+
+.collage {
+  position: relative;
+  min-height: 560px;
+}
+
+.collageTile {
+  position: absolute;
+  display: grid;
+  place-items: center;
+  gap: 10px;
+  width: 46%;
+  height: 42%;
+  border-radius: 34px;
+  background: color-mix(in srgb, var(--secondary) 24%, white 8%);
+  color: var(--fg);
+  transform: rotate(-4deg);
+}
+
+.collageTile .symbolMark {
+  width: 96px;
+  height: 96px;
+}
+
+.collageTile span {
+  font-size: clamp(22px, 2vw, 38px);
+  text-transform: uppercase;
+}
+
+.tile-1 {
+  left: 0;
+  top: 0;
+}
+
+.tile-2 {
+  right: 5%;
+  top: 8%;
+  transform: rotate(5deg);
+}
+
+.tile-3 {
+  left: 10%;
+  bottom: 0;
+  transform: rotate(3deg);
+}
+
+.tile-4 {
+  right: 0;
+  bottom: 5%;
+  transform: rotate(-3deg);
+}
+
+.mapLike {
+  position: relative;
+  min-height: 540px;
+  overflow: hidden;
+  border: 3px solid color-mix(in srgb, var(--fg) 24%, transparent);
+  border-radius: 42px;
+  background:
+    radial-gradient(circle at 30% 30%, color-mix(in srgb, var(--accent) 18%, transparent), transparent 20%),
+    radial-gradient(circle at 70% 66%, color-mix(in srgb, var(--secondary) 22%, transparent), transparent 22%),
+    color-mix(in srgb, var(--bg) 80%, white 8%);
+}
+
+.mapPath {
+  position: absolute;
+  left: 12%;
+  top: 48%;
+  width: 76%;
+  height: 5px;
+  background: var(--accent);
+  transform: rotate(-12deg);
+}
+
+.mapPin {
+  position: absolute;
+  display: grid;
+  gap: 8px;
+  min-width: 150px;
+}
+
+.mapPin span {
+  display: grid;
+  place-items: center;
+  width: 58px;
+  height: 58px;
+  border-radius: 50%;
+  background: var(--fg);
+  color: var(--bg);
+  font-family: "Oswald Variable", Impact, sans-serif;
+  font-size: 28px;
+}
+
+.mapPin strong {
+  font-size: clamp(18px, 1.6vw, 30px);
+  text-transform: uppercase;
+}
+
+.pin-1 {
+  left: 10%;
+  top: 20%;
+}
+
+.pin-2 {
+  left: 44%;
+  top: 34%;
+}
+
+.pin-3 {
+  right: 10%;
+  bottom: 18%;
+}
+
+.pin-4 {
+  left: 24%;
+  bottom: 12%;
+}
+
 @media (max-aspect-ratio: 1/1) {
   .titleRail {
     left: 42px;

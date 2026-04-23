@@ -8,6 +8,13 @@ export const visualTypes = [
   "quote",
   "chart",
   "summary",
+  "kinetic-text",
+  "diagram",
+  "stat-wall",
+  "before-after",
+  "myth-fact",
+  "image-collage",
+  "map",
 ] as const;
 
 export const layoutTypes = [
@@ -79,6 +86,9 @@ export const symbolNames = [
   "signal",
   "prism",
   "wave",
+  "target",
+  "globe",
+  "bolt",
 ] as const;
 
 export const toneOptions = [
@@ -120,6 +130,13 @@ export const sceneSchema = z.object({
     )
     .min(2)
     .max(5)
+    .optional(),
+  keywords: z.array(z.string().min(1).max(18)).min(2).max(6).optional(),
+  compare: z
+    .object({
+      left: z.string().min(2).max(44),
+      right: z.string().min(2).max(44),
+    })
     .optional(),
 });
 

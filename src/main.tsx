@@ -1,4 +1,4 @@
-import {StrictMode, useMemo, useState} from "react";
+import {StrictMode, useEffect, useMemo, useState} from "react";
 import {createRoot} from "react-dom/client";
 import {Player} from "@remotion/player";
 import {InfographicMinute} from "./remotion/InfographicMinute";
@@ -26,6 +26,28 @@ type RenderStatus = {
   error?: string;
 };
 
+type RenderJob = {
+  id: string;
+  type: string;
+  status: "queued" | "running" | "complete" | "failed";
+  step: string;
+  error?: string;
+};
+
+type ProjectSummary = {
+  id: string;
+  title: string;
+  topic: string;
+  aspectRatio: string;
+  updatedAt?: string;
+};
+
+type PerformanceSettings = {
+  previewScale: number;
+  stillScale: number;
+  renderScale: number;
+};
+
 const initialInput: StoryboardInput = {
   topic: "AI-generated one-minute explainers",
   audience: "founders and content teams",
@@ -35,6 +57,19 @@ const initialInput: StoryboardInput = {
 };
 
 const initialStoryboard = generateStoryboard(initialInput);
+const storageKeys = {
+  generation: "presently:generation-settings",
+  performance: "presently:performance-settings",
+};
+
+const loadStoredSettings = <Settings,>(key: string, fallback: Settings): Settings => {
+  try {
+    const raw = window.localStorage.getItem(key);
+    return raw ? {...fallback, ...JSON.parse(raw)} : fallback;
+  } catch {
+    return fallback;
+  }
+};
 
 const inferPromptInput = (
   prompt: string,
@@ -104,14 +139,38 @@ const postJson = async <Response,>(url: string, body: unknown = {}) => {
   return data;
 };
 
+const deleteJson = async <Response,>(url: string) => {
+  const response = await fetch(url, {method: "DELETE"});
+  const data = (await response.json()) as Response & {ok?: boolean; error?: string};
+
+  if (!response.ok || data.ok === false) {
+    throw new Error(data.error ?? "Request failed");
+  }
+
+  return data;
+};
+
+const getJson = async <Response,>(url: string) => {
+  const response = await fetch(url);
+  const data = (await response.json()) as Response & {ok?: boolean; error?: string};
+
+  if (!response.ok || data.ok === false) {
+    throw new Error(data.error ?? "Request failed");
+  }
+
+  return data;
+};
+
 const App = () => {
   const [storyboard, setStoryboard] = useState<Storyboard>(initialStoryboard);
   const [generationSettings, setGenerationSettings] =
-    useState<Pick<StoryboardInput, "audience" | "tone" | "aspectRatio">>({
-      audience: initialInput.audience,
-      tone: initialInput.tone,
-      aspectRatio: initialInput.aspectRatio,
-    });
+    useState<Pick<StoryboardInput, "audience" | "tone" | "aspectRatio">>(() =>
+      loadStoredSettings(storageKeys.generation, {
+        audience: initialInput.audience,
+        tone: initialInput.tone,
+        aspectRatio: initialInput.aspectRatio,
+      }),
+    );
   const [prompt, setPrompt] = useState("");
   const [mode, setMode] = useState<AppMode>("preview");
   const [renderStatus, setRenderStatus] = useState<RenderStatus>({
@@ -120,6 +179,16 @@ const App = () => {
   });
   const [videoUrl, setVideoUrl] = useState("/output/videos/infographic.mp4");
   const [stillUrl, setStillUrl] = useState("/output/stills/frame.png");
+  const [jobs, setJobs] = useState<RenderJob[]>([]);
+  const [projects, setProjects] = useState<ProjectSummary[]>([]);
+  const [thumbnails, setThumbnails] = useState<string[]>([]);
+  const [performanceSettings, setPerformanceSettings] = useState<PerformanceSettings>(() =>
+    loadStoredSettings(storageKeys.performance, {
+      previewScale: 0.55,
+      stillScale: 0.25,
+      renderScale: 1,
+    }),
+  );
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       id: 1,
@@ -129,10 +198,81 @@ const App = () => {
     },
   ]);
   const dimensions = getDimensions(storyboard.aspectRatio);
+  const previewWidth = Math.round(dimensions.width * performanceSettings.previewScale);
+  const previewHeight = Math.round(dimensions.height * performanceSettings.previewScale);
   const storyboardJson = useMemo(
     () => JSON.stringify(storyboard, null, 2),
     [storyboard],
   );
+
+  const refreshJobs = async () => {
+    const response = await getJson<{jobs: RenderJob[]}>("/api/jobs");
+    setJobs(response.jobs);
+
+    const active = response.jobs.find(
+      (job) => job.status === "queued" || job.status === "running",
+    );
+    const latest = response.jobs[0];
+
+    if (active) {
+      setRenderStatus({label: `${active.type}: ${active.step}`, busy: true});
+      return;
+    }
+
+    if (latest?.status === "failed") {
+      setRenderStatus({label: latest.step, busy: false, error: latest.error});
+      return;
+    }
+
+    if (latest?.status === "complete") {
+      setRenderStatus({label: `${latest.type} complete`, busy: false});
+      setVideoUrl(`/output/videos/infographic.mp4?t=${Date.now()}`);
+      setStillUrl(`/output/stills/frame.png?t=${Date.now()}`);
+      if (latest.type === "thumbnails") {
+        void refreshThumbnails();
+      }
+    }
+  };
+
+  const refreshProjects = async () => {
+    const response = await getJson<{projects: ProjectSummary[]}>("/api/projects");
+    setProjects(response.projects);
+  };
+
+  const refreshThumbnails = async () => {
+    const response = await getJson<{thumbnails: string[]}>("/api/thumbnails");
+    setThumbnails(response.thumbnails.map((url) => `${url}?t=${Date.now()}`));
+  };
+
+  const applyStoryboard = (nextStoryboard: Storyboard) => {
+    setStoryboard(nextStoryboard);
+    setGenerationSettings({
+      audience: nextStoryboard.audience,
+      tone: nextStoryboard.tone,
+      aspectRatio: nextStoryboard.aspectRatio,
+    });
+    setMode("preview");
+  };
+
+  useEffect(() => {
+    void refreshProjects();
+    void refreshJobs();
+    void refreshThumbnails();
+
+    const interval = window.setInterval(() => {
+      void refreshJobs();
+    }, 2000);
+
+    return () => window.clearInterval(interval);
+  }, []);
+
+  useEffect(() => {
+    window.localStorage.setItem(storageKeys.generation, JSON.stringify(generationSettings));
+  }, [generationSettings]);
+
+  useEffect(() => {
+    window.localStorage.setItem(storageKeys.performance, JSON.stringify(performanceSettings));
+  }, [performanceSettings]);
 
   const generateFromPrompt = async () => {
     if (!prompt.trim()) {
@@ -158,7 +298,7 @@ const App = () => {
         "/api/storyboard",
         nextInput,
       );
-      setStoryboard(response.storyboard);
+      applyStoryboard(response.storyboard);
       setMessages((current) => [
         ...current,
         {id: Date.now(), role: "user", content: prompt},
@@ -170,11 +310,11 @@ const App = () => {
         },
       ]);
       setPrompt("");
-      setMode("preview");
       setRenderStatus({label: "Video plan ready", busy: false});
+      void refreshProjects();
     } catch (error) {
       const fallbackStoryboard = generateStoryboard(nextInput);
-      setStoryboard(fallbackStoryboard);
+      applyStoryboard(fallbackStoryboard);
       setMessages((current) => [
         ...current,
         {id: Date.now(), role: "user", content: prompt},
@@ -186,7 +326,6 @@ const App = () => {
         },
       ]);
       setPrompt("");
-      setMode("preview");
       setRenderStatus({
         label: "Generated locally",
         busy: false,
@@ -223,30 +362,83 @@ const App = () => {
   };
 
   const saveStoryboard = async () =>
-    runAction("Saving storyboard", () =>
-      postJson("/api/storyboard/save", {storyboard}),
-    );
+    runAction("Saving storyboard", async () => {
+      await postJson("/api/storyboard/save", {storyboard});
+      await refreshProjects();
+    });
 
   const createMusic = async () =>
-    runAction("Generating music", () => postJson("/api/music"));
+    runAction("Queueing music", async () => {
+      await postJson("/api/music");
+      await refreshJobs();
+    });
 
   const renderStill = async () => {
     await saveStoryboard();
-    const result = await runAction("Rendering still", () => postJson<{url: string}>("/api/still"));
+    await runAction("Queueing still", async () => {
+      await postJson("/api/still", {scale: performanceSettings.stillScale});
+      await refreshJobs();
+    });
+  };
 
-    if (result?.url) {
-      setStillUrl(result.url);
-    }
+  const renderThumbnails = async () => {
+    await saveStoryboard();
+    await runAction("Queueing thumbnails", async () => {
+      await postJson("/api/thumbnails", {scale: performanceSettings.stillScale});
+      await refreshJobs();
+    });
   };
 
   const renderVideo = async () => {
     await saveStoryboard();
-    await createMusic();
-    const result = await runAction("Rendering video", () => postJson<{url: string}>("/api/render"));
+    await runAction("Queueing video", async () => {
+      await postJson("/api/render", {scale: performanceSettings.renderScale});
+      await refreshJobs();
+    });
+  };
 
-    if (result?.url) {
-      setVideoUrl(result.url);
+  const loadProject = async (project: ProjectSummary) =>
+    runAction("Loading project", async () => {
+      const response = await postJson<{storyboard: Storyboard}>(
+        `/api/projects/${encodeURIComponent(project.id)}/load`,
+      );
+      applyStoryboard(response.storyboard);
+      setMessages((current) => [
+        ...current,
+        {
+          id: Date.now(),
+          role: "assistant",
+          content: `Loaded "${response.storyboard.title}".`,
+        },
+      ]);
+    });
+
+  const duplicateProject = async (project: ProjectSummary) =>
+    runAction("Duplicating project", async () => {
+      const response = await postJson<{storyboard: Storyboard}>(
+        `/api/projects/${encodeURIComponent(project.id)}/duplicate`,
+      );
+      applyStoryboard(response.storyboard);
+      await refreshProjects();
+      setMessages((current) => [
+        ...current,
+        {
+          id: Date.now(),
+          role: "assistant",
+          content: `Duplicated and opened "${response.storyboard.title}".`,
+        },
+      ]);
+    });
+
+  const deleteProject = async (project: ProjectSummary) => {
+    if (!window.confirm(`Delete "${project.title}" from project history?`)) {
+      return;
     }
+
+    await runAction("Deleting project", async () => {
+      await deleteJson(`/api/projects/${encodeURIComponent(project.id)}`);
+      await refreshProjects();
+    });
   };
 
   return (
@@ -314,14 +506,23 @@ const App = () => {
                 inputProps={storyboard}
                 durationInFrames={TARGET_DURATION_FRAMES}
                 fps={FPS}
-                compositionWidth={dimensions.width}
-                compositionHeight={dimensions.height}
+                compositionWidth={previewWidth}
+                compositionHeight={previewHeight}
                 controls
                 style={{
                   width: "100%",
-                  aspectRatio: `${dimensions.width}/${dimensions.height}`,
+                  aspectRatio: `${previewWidth}/${previewHeight}`,
                 }}
               />
+            </div>
+            <div className="thumbnailStrip">
+              {thumbnails.length === 0 ? (
+                <p className="emptyState">Render thumbnails to preview scenes quickly.</p>
+              ) : (
+                thumbnails.map((thumbnail, index) => (
+                  <img src={thumbnail} alt={`Scene ${index + 1}`} key={thumbnail} />
+                ))
+              )}
             </div>
             <div className="summaryGrid">
               <article>
@@ -475,6 +676,90 @@ const App = () => {
                 <code>public/output/videos/infographic.mp4</code>
               </div>
             </div>
+            <div className="editorCard">
+              <p className="eyebrow">Performance</p>
+              <label>
+                Preview scale
+                <select
+                  value={performanceSettings.previewScale}
+                  onChange={(event) =>
+                    setPerformanceSettings((current) => ({
+                      ...current,
+                      previewScale: Number(event.target.value),
+                    }))
+                  }
+                >
+                  <option value={0.35}>Low</option>
+                  <option value={0.55}>Balanced</option>
+                  <option value={0.75}>High</option>
+                </select>
+              </label>
+              <label>
+                Still and thumbnail scale
+                <select
+                  value={performanceSettings.stillScale}
+                  onChange={(event) =>
+                    setPerformanceSettings((current) => ({
+                      ...current,
+                      stillScale: Number(event.target.value),
+                    }))
+                  }
+                >
+                  <option value={0.12}>Fast</option>
+                  <option value={0.25}>Balanced</option>
+                  <option value={0.5}>Detailed</option>
+                </select>
+              </label>
+              <label>
+                MP4 render scale
+                <select
+                  value={performanceSettings.renderScale}
+                  onChange={(event) =>
+                    setPerformanceSettings((current) => ({
+                      ...current,
+                      renderScale: Number(event.target.value),
+                    }))
+                  }
+                >
+                  <option value={0.35}>Draft</option>
+                  <option value={0.5}>Preview</option>
+                  <option value={1}>Final</option>
+                </select>
+              </label>
+            </div>
+            <div className="editorCard">
+              <p className="eyebrow">Project history</p>
+              <div className="projectList">
+                {projects.length === 0 ? (
+                  <p className="emptyState">No saved projects yet.</p>
+                ) : (
+                  projects.slice(0, 8).map((project) => (
+                    <article className="projectItem" key={project.id}>
+                      <div>
+                        <strong>{project.title}</strong>
+                        <span>{project.topic}</span>
+                      </div>
+                      <em>{project.aspectRatio}</em>
+                      <div className="projectActions">
+                        <button type="button" onClick={() => loadProject(project)}>
+                          Load
+                        </button>
+                        <button type="button" onClick={() => duplicateProject(project)}>
+                          Copy
+                        </button>
+                        <button
+                          className="ghostDanger"
+                          type="button"
+                          onClick={() => deleteProject(project)}
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    </article>
+                  ))
+                )}
+              </div>
+            </div>
           </section>
         )}
 
@@ -499,6 +784,9 @@ const App = () => {
               <button type="button" onClick={renderStill} disabled={renderStatus.busy}>
                 Render still
               </button>
+              <button type="button" onClick={renderThumbnails} disabled={renderStatus.busy}>
+                Render thumbnails
+              </button>
               <button type="button" onClick={renderVideo} disabled={renderStatus.busy}>
                 Render MP4
               </button>
@@ -517,6 +805,22 @@ const App = () => {
               <p className={renderStatus.error ? "status error" : "status"}>
                 {renderStatus.error ?? renderStatus.label}
               </p>
+            </div>
+            <div className="jsonPane">
+              <p className="eyebrow">Render queue</p>
+              <div className="queueList">
+                {jobs.length === 0 ? (
+                  <p className="emptyState">No render jobs yet.</p>
+                ) : (
+                  jobs.slice(0, 8).map((job) => (
+                    <article className={`queueItem ${job.status}`} key={job.id}>
+                      <strong>{job.type}</strong>
+                      <span>{job.step}</span>
+                      <em>{job.status}</em>
+                    </article>
+                  ))
+                )}
+              </div>
             </div>
             <div className="jsonPane">
               <p className="eyebrow">Settings</p>

@@ -232,6 +232,26 @@ button:hover,
   gap: 10px;
 }
 
+.thumbnailStrip {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  padding: 12px;
+  border: 1px solid #dedbd2;
+  border-radius: 16px;
+  background: #ffffff;
+}
+
+.thumbnailStrip img {
+  width: 160px;
+  min-width: 160px;
+  aspect-ratio: 16 / 9;
+  border: 1px solid #dedbd2;
+  border-radius: 10px;
+  object-fit: cover;
+  background: #111217;
+}
+
 .summaryGrid article {
   display: grid;
   gap: 4px;
@@ -370,6 +390,103 @@ pre {
   padding: 8px 10px;
 }
 
+.queueList,
+.projectList {
+  display: grid;
+  gap: 8px;
+}
+
+.queueItem,
+.projectItem {
+  display: grid;
+  gap: 10px;
+  align-items: center;
+  padding: 10px;
+  border: 1px solid #e2ded4;
+  border-radius: 10px;
+  background: #fbfaf7;
+}
+
+.queueItem {
+  grid-template-columns: 110px minmax(0, 1fr) 88px;
+}
+
+.projectItem {
+  grid-template-columns: minmax(0, 1fr) 52px auto;
+}
+
+.queueItem strong,
+.projectItem strong {
+  display: block;
+  color: #151a1f;
+  font-size: 13px;
+}
+
+.queueItem span,
+.projectItem span {
+  display: block;
+  overflow: hidden;
+  color: #4d5661;
+  font-size: 13px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.queueItem em,
+.projectItem em {
+  color: #68717b;
+  font-size: 12px;
+  font-style: normal;
+  text-align: right;
+}
+
+.projectActions {
+  display: flex;
+  gap: 6px;
+  justify-content: flex-end;
+}
+
+.projectActions button {
+  border-color: #d8d5cc;
+  padding: 7px 9px;
+  background: #ffffff;
+  color: #38424d;
+  font-size: 12px;
+}
+
+.projectActions button:hover {
+  border-color: #151a1f;
+  background: #151a1f;
+  color: #ffffff;
+}
+
+.projectActions .ghostDanger {
+  color: #9f3028;
+}
+
+.projectActions .ghostDanger:hover {
+  border-color: #9f3028;
+  background: #9f3028;
+  color: #ffffff;
+}
+
+.queueItem.running,
+.queueItem.queued {
+  border-color: #a7c7e7;
+  background: #f3f8ff;
+}
+
+.queueItem.failed {
+  border-color: #f2b8b5;
+  background: #fff6f5;
+}
+
+.emptyState {
+  margin: 0;
+  color: #68717b;
+  font-size: 13px;
+}
+
 .jsonPane {
   grid-column: 1 / -1;
 }
@@ -419,5 +536,17 @@ pre {
   .colorGrid,
   .summaryGrid {
     grid-template-columns: 1fr;
+  }
+
+  .projectItem {
+    grid-template-columns: 1fr;
+  }
+
+  .projectItem em {
+    text-align: left;
+  }
+
+  .projectActions {
+    justify-content: flex-start;
   }
 }

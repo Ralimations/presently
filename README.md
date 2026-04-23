@@ -24,10 +24,12 @@ npm run render:storyboard
 ```
 
 The web app handles storyboard saving, music generation, still rendering, and MP4 rendering from the Renders tab.
+Project history, loading, duplication, deletion, render quality, and generation defaults are handled from the Settings tab.
 
 Generated files stay inside the project under:
 
 - `output/storyboards/storyboard.json`
+- `output/projects/*.json`
 - `public/output/videos/infographic.mp4`
 - `public/output/stills/frame.png`
 - `output/site`

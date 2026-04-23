@@ -10,6 +10,7 @@ import {
   TextureType,
   Tone,
   TransitionType,
+  type Scene,
   validateStoryboard,
 } from "./schema";
 
@@ -126,6 +127,52 @@ const symbolSequence: SymbolName[] = [
   "prism",
 ];
 
+const defaultVisualSequence: Scene["visualType"][] = [
+  "hero-stat",
+  "timeline",
+  "comparison",
+  "process",
+  "chart",
+  "summary",
+];
+
+const extendedVisualSequence: Scene["visualType"][] = [
+  "kinetic-text",
+  "map",
+  "myth-fact",
+  "diagram",
+  "stat-wall",
+  "before-after",
+];
+
+const pickVisualSequence = (input: StoryboardInput): Scene["visualType"][] => {
+  const prompt = `${input.topic} ${input.sources ?? ""}`.toLowerCase();
+
+  if (
+    prompt.includes("map") ||
+    prompt.includes("city") ||
+    prompt.includes("urban") ||
+    prompt.includes("global") ||
+    prompt.includes("where")
+  ) {
+    return ["hero-stat", "map", "diagram", "before-after", "stat-wall", "summary"];
+  }
+
+  if (
+    prompt.includes("myth") ||
+    prompt.includes("debunk") ||
+    prompt.includes("misconception")
+  ) {
+    return ["kinetic-text", "myth-fact", "comparison", "diagram", "quote", "summary"];
+  }
+
+  if (input.tone === "cinematic" || input.tone === "bold") {
+    return extendedVisualSequence;
+  }
+
+  return defaultVisualSequence;
+};
+
 export const refinePrompt = (input: StoryboardInput) => {
   const topic = clampTopic(input.topic);
   const audience = input.audience.trim() || "curious viewers";
@@ -160,6 +207,7 @@ export const generateStoryboard = (input: StoryboardInput): Storyboard => {
     ? ` using the provided source context`
     : "";
   const refinedPrompt = refinePrompt(input);
+  const visualSequence = pickVisualSequence(input);
 
   return validateStoryboard({
     title: `${topic}: the one-minute briefing`,
@@ -176,7 +224,7 @@ export const generateStoryboard = (input: StoryboardInput): Storyboard => {
     scenes: [
       {
         id: "hook",
-        visualType: "hero-stat",
+        visualType: visualSequence[0],
         layout: layoutSequence[0],
         motion: motionSequence[0],
         transition: transitionSequence[0],
@@ -187,10 +235,11 @@ export const generateStoryboard = (input: StoryboardInput): Storyboard => {
         headline: `Why ${topic} matters now`,
         body: `Frame the topic for ${audience}${context}: what changed, why it is urgent, and what viewers should watch next.`,
         stat: "60 sec",
+        keywords: ["why now", "signal", "stakes"],
       },
       {
         id: "context",
-        visualType: "timeline",
+        visualType: visualSequence[1],
         layout: layoutSequence[1],
         motion: motionSequence[1],
         transition: transitionSequence[1],
@@ -200,10 +249,11 @@ export const generateStoryboard = (input: StoryboardInput): Storyboard => {
         eyebrow: "Context",
         headline: "The shift did not happen overnight",
         body: `Show the before state, the inflection point, and the new behavior or opportunity created by ${topic}.`,
+        keywords: ["before", "turning point", "now"],
       },
       {
         id: "contrast",
-        visualType: "comparison",
+        visualType: visualSequence[2],
         layout: layoutSequence[2],
         motion: motionSequence[2],
         transition: transitionSequence[2],
@@ -217,10 +267,14 @@ export const generateStoryboard = (input: StoryboardInput): Storyboard => {
           {label: "Old", value: 42},
           {label: "New", value: 78},
         ],
+        compare: {
+          left: "Old model",
+          right: "New reality",
+        },
       },
       {
         id: "mechanism",
-        visualType: "process",
+        visualType: visualSequence[3],
         layout: layoutSequence[3],
         motion: motionSequence[3],
         transition: transitionSequence[3],
@@ -230,10 +284,11 @@ export const generateStoryboard = (input: StoryboardInput): Storyboard => {
         eyebrow: "Mechanism",
         headline: "The system works in three moves",
         body: "Input becomes signal, signal drives a decision, and the decision compounds into visible outcomes.",
+        keywords: ["input", "signal", "decision"],
       },
       {
         id: "proof",
-        visualType: "chart",
+        visualType: visualSequence[4],
         layout: layoutSequence[4],
         motion: motionSequence[4],
         transition: transitionSequence[4],
@@ -249,10 +304,11 @@ export const generateStoryboard = (input: StoryboardInput): Storyboard => {
           {label: "Cost", value: 48},
           {label: "Trust", value: 70},
         ],
+        keywords: ["reach", "speed", "cost", "trust"],
       },
       {
         id: "takeaway",
-        visualType: "summary",
+        visualType: visualSequence[5],
         layout: layoutSequence[5],
         motion: motionSequence[5],
         transition: transitionSequence[5],
@@ -263,6 +319,7 @@ export const generateStoryboard = (input: StoryboardInput): Storyboard => {
         headline: "The practical read",
         body: `${topic} is easiest to explain when the story moves from why now, to how it works, to what action ${audience} should take.`,
         stat: "3 ideas",
+        keywords: ["why now", "how it works", "what to do"],
       },
     ],
   });

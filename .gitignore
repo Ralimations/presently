@@ -1,8 +1,10 @@
 node_modules
 output/site
+output/projects
 output/storyboards
 public/output/videos
 public/output/stills
+public/output/thumbnails
 public/output/music/placeholder.wav
 .remotion
 models

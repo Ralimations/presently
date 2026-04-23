@@ -10,7 +10,9 @@ import {
   Map,
   Orbit,
   Sparkles,
+  Target,
   Triangle as TriangleIcon,
+  Zap,
   Waves,
 } from "lucide-react";
 import {Scene, Storyboard, FPS, SymbolName} from "../storyboard/schema";
@@ -24,6 +26,13 @@ const sceneIcons: Record<Scene["visualType"], string> = {
   quote: "05",
   chart: "06",
   summary: "07",
+  "kinetic-text": "08",
+  diagram: "09",
+  "stat-wall": "10",
+  "before-after": "11",
+  "myth-fact": "12",
+  "image-collage": "13",
+  map: "14",
 };
 
 const getSceneStartFrame = (scenes: Scene[], index: number) =>
@@ -55,6 +64,104 @@ const Bars = ({scene}: {scene: Scene}) => {
   );
 };
 
+const KineticWords = ({scene}: {scene: Scene}) => {
+  const words = scene.keywords ?? scene.headline.split(/\s+/).slice(0, 5);
+
+  return (
+    <div className="kineticWords">
+      {words.map((word, index) => (
+        <span key={`${word}-${index}`}>{word}</span>
+      ))}
+    </div>
+  );
+};
+
+const Diagram = ({scene}: {scene: Scene}) => {
+  const nodes = scene.keywords ?? ["input", "signal", "decision"];
+
+  return (
+    <div className="diagram">
+      {nodes.slice(0, 4).map((node, index) => (
+        <div className="diagramNode" key={node}>
+          <SymbolMark scene={scene} />
+          <strong>{node}</strong>
+          {index < nodes.length - 1 ? <span className="connector" /> : null}
+        </div>
+      ))}
+    </div>
+  );
+};
+
+const StatWall = ({scene}: {scene: Scene}) => {
+  const data =
+    scene.chartData ??
+    [
+      {label: "signal", value: 68},
+      {label: "speed", value: 82},
+      {label: "trust", value: 70},
+    ];
+
+  return (
+    <div className="statWall">
+      {data.map((item) => (
+        <div className="statTile" key={item.label}>
+          <strong>{item.value}</strong>
+          <span>{item.label}</span>
+        </div>
+      ))}
+    </div>
+  );
+};
+
+const BeforeAfter = ({scene}: {scene: Scene}) => (
+  <div className="beforeAfter">
+    <div>
+      <span>Before</span>
+      <strong>{scene.compare?.left ?? "Fragmented"}</strong>
+    </div>
+    <div>
+      <span>After</span>
+      <strong>{scene.compare?.right ?? "Coordinated"}</strong>
+    </div>
+  </div>
+);
+
+const MythFact = ({scene}: {scene: Scene}) => (
+  <div className="mythFact">
+    <div>
+      <span>Myth</span>
+      <strong>{scene.compare?.left ?? "It is only a trend"}</strong>
+    </div>
+    <div>
+      <span>Fact</span>
+      <strong>{scene.compare?.right ?? "Systems change when incentives shift"}</strong>
+    </div>
+  </div>
+);
+
+const ImageCollage = ({scene}: {scene: Scene}) => (
+  <div className="collage">
+    {(scene.keywords ?? ["source", "signal", "system", "impact"]).map((item, index) => (
+      <div className={`collageTile tile-${index + 1}`} key={item}>
+        <SymbolMark scene={scene} />
+        <span>{item}</span>
+      </div>
+    ))}
+  </div>
+);
+
+const MapLike = ({scene}: {scene: Scene}) => (
+  <div className="mapLike">
+    <div className="mapPath" />
+    {(scene.keywords ?? ["origin", "hub", "edge"]).slice(0, 4).map((item, index) => (
+      <div className={`mapPin pin-${index + 1}`} key={item}>
+        <span>{index + 1}</span>
+        <strong>{item}</strong>
+      </div>
+    ))}
+  </div>
+);
+
 const iconProps = {
   strokeWidth: 1.7,
   absoluteStrokeWidth: true,
@@ -71,6 +178,9 @@ const symbolIcons: Record<SymbolName, React.ComponentType<typeof iconProps>> = {
   signal: Compass,
   prism: TriangleIcon,
   wave: Waves,
+  target: Target,
+  globe: Orbit,
+  bolt: Zap,
 };
 
 const SymbolMark = ({scene}: {scene: Scene}) => {
@@ -189,6 +299,34 @@ const transitionFilter = (transition: Scene["transition"], localFrame: number) =
 };
 
 const Visual = ({scene, index}: {scene: Scene; index: number}) => {
+  if (scene.visualType === "kinetic-text") {
+    return <KineticWords scene={scene} />;
+  }
+
+  if (scene.visualType === "diagram") {
+    return <Diagram scene={scene} />;
+  }
+
+  if (scene.visualType === "stat-wall") {
+    return <StatWall scene={scene} />;
+  }
+
+  if (scene.visualType === "before-after") {
+    return <BeforeAfter scene={scene} />;
+  }
+
+  if (scene.visualType === "myth-fact") {
+    return <MythFact scene={scene} />;
+  }
+
+  if (scene.visualType === "image-collage") {
+    return <ImageCollage scene={scene} />;
+  }
+
+  if (scene.visualType === "map") {
+    return <MapLike scene={scene} />;
+  }
+
   if (scene.visualType === "chart" || scene.visualType === "comparison") {
     return <Bars scene={scene} />;
   }
