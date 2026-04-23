@@ -1,0 +1,49 @@
+{
+  "name": "presently",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Template-driven one-minute infographic video maker powered by Remotion storyboard JSON.",
+  "scripts": {
+    "dev": "node server/dev-server.mjs",
+    "vite": "vite",
+    "remotion": "remotion studio",
+    "studio": "remotion studio",
+    "build": "tsc --noEmit && vite build",
+    "render": "remotion render InfographicMinute public/output/videos/infographic.mp4",
+    "render:storyboard": "remotion render InfographicMinute public/output/videos/infographic.mp4 --props=output/storyboards/storyboard.json",
+    "still": "remotion still InfographicMinute public/output/stills/frame.png --frame=90 --scale=0.25",
+    "storyboard": "tsx scripts/create-storyboard.ts",
+    "music:placeholder": "tsx scripts/create-placeholder-music.ts",
+    "assets:install": "npm install lucide-react react-icons @remotion/transitions@4.0.341 @remotion/shapes@4.0.341 @remotion/noise@4.0.341 @remotion/layout-utils@4.0.341 @remotion/motion-blur@4.0.341 @fontsource-variable/space-grotesk @fontsource-variable/newsreader @fontsource-variable/jetbrains-mono @fontsource-variable/playfair-display @fontsource-variable/archivo @fontsource-variable/oswald"
+  },
+  "dependencies": {
+    "@fontsource-variable/archivo": "^5.2.8",
+    "@fontsource-variable/jetbrains-mono": "^5.2.8",
+    "@fontsource-variable/newsreader": "^5.2.10",
+    "@fontsource-variable/oswald": "^5.2.8",
+    "@fontsource-variable/playfair-display": "^5.2.8",
+    "@fontsource-variable/space-grotesk": "^5.2.10",
+    "@remotion/layout-utils": "^4.0.341",
+    "@remotion/motion-blur": "^4.0.341",
+    "@remotion/noise": "^4.0.341",
+    "@remotion/player": "4.0.341",
+    "@remotion/shapes": "^4.0.341",
+    "@remotion/transitions": "^4.0.341",
+    "lucide-react": "^1.8.0",
+    "react": "^19.1.1",
+    "react-dom": "^19.1.1",
+    "react-icons": "^5.6.0",
+    "remotion": "4.0.341",
+    "zod": "^3.25.76"
+  },
+  "devDependencies": {
+    "@remotion/cli": "4.0.341",
+    "@types/node": "^24.3.0",
+    "@types/react": "^19.1.10",
+    "@types/react-dom": "^19.1.7",
+    "@vitejs/plugin-react": "^5.0.1",
+    "tsx": "^4.20.4",
+    "typescript": "^5.9.2",
+    "vite": "^7.1.3"
+  }
+}

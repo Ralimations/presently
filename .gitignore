@@ -1,0 +1,9 @@
+node_modules
+output/site
+output/storyboards
+public/output/videos
+public/output/stills
+public/output/music/placeholder.wav
+.remotion
+models
+.env.local
