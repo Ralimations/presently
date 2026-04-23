@@ -33,6 +33,29 @@ export const motionTypes = [
   "drift",
 ] as const;
 
+export const cameraMoves = [
+  "static",
+  "push-in",
+  "pull-back",
+  "pan-left",
+  "pan-right",
+  "tilt-up",
+  "focus-pop",
+  "orbit",
+  "handheld",
+] as const;
+
+export const cameraFocuses = [
+  "headline",
+  "visual",
+  "stat",
+  "center",
+  "left",
+  "right",
+] as const;
+
+export const cameraIntensities = ["subtle", "medium", "strong"] as const;
+
 export const transitionTypes = [
   "fade",
   "push",
@@ -113,6 +136,11 @@ export const sceneSchema = z.object({
   visualType: z.enum(visualTypes),
   layout: z.enum(layoutTypes),
   motion: z.enum(motionTypes),
+  camera: z.object({
+    move: z.enum(cameraMoves),
+    focus: z.enum(cameraFocuses),
+    intensity: z.enum(cameraIntensities),
+  }),
   transition: z.enum(transitionTypes),
   template: z.enum(templateTypes),
   symbol: z.enum(symbolNames),
@@ -166,6 +194,9 @@ export type Tone = (typeof toneOptions)[number];
 export type AspectRatio = (typeof aspectRatios)[number];
 export type LayoutType = (typeof layoutTypes)[number];
 export type MotionType = (typeof motionTypes)[number];
+export type CameraMove = (typeof cameraMoves)[number];
+export type CameraFocus = (typeof cameraFocuses)[number];
+export type CameraIntensity = (typeof cameraIntensities)[number];
 export type TransitionType = (typeof transitionTypes)[number];
 export type ArtDirection = (typeof artDirections)[number];
 export type FontPair = (typeof fontPairs)[number];

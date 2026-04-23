@@ -1,6 +1,9 @@
 import {
   ArtDirection,
   AspectRatio,
+  CameraFocus,
+  CameraIntensity,
+  CameraMove,
   FontPair,
   LayoutType,
   MotionType,
@@ -99,6 +102,32 @@ const motionSequence: MotionType[] = [
   "drift",
   "rise",
 ];
+
+const cameraMoveSequence: CameraMove[] = [
+  "push-in",
+  "pan-left",
+  "focus-pop",
+  "tilt-up",
+  "orbit",
+  "pull-back",
+];
+
+const cameraFocusSequence: CameraFocus[] = [
+  "headline",
+  "visual",
+  "stat",
+  "center",
+  "right",
+  "center",
+];
+
+const cameraIntensityByTone: Record<Tone, CameraIntensity> = {
+  clear: "subtle",
+  bold: "medium",
+  academic: "subtle",
+  startup: "medium",
+  cinematic: "strong",
+};
 
 const transitionSequence: TransitionType[] = [
   "iris",
@@ -227,6 +256,11 @@ export const generateStoryboard = (input: StoryboardInput): Storyboard => {
         visualType: visualSequence[0],
         layout: layoutSequence[0],
         motion: motionSequence[0],
+        camera: {
+          move: cameraMoveSequence[0],
+          focus: cameraFocusSequence[0],
+          intensity: cameraIntensityByTone[input.tone],
+        },
         transition: transitionSequence[0],
         template: templateSequence[0],
         symbol: symbolSequence[0],
@@ -242,6 +276,11 @@ export const generateStoryboard = (input: StoryboardInput): Storyboard => {
         visualType: visualSequence[1],
         layout: layoutSequence[1],
         motion: motionSequence[1],
+        camera: {
+          move: cameraMoveSequence[1],
+          focus: cameraFocusSequence[1],
+          intensity: cameraIntensityByTone[input.tone],
+        },
         transition: transitionSequence[1],
         template: templateSequence[1],
         symbol: symbolSequence[1],
@@ -256,6 +295,11 @@ export const generateStoryboard = (input: StoryboardInput): Storyboard => {
         visualType: visualSequence[2],
         layout: layoutSequence[2],
         motion: motionSequence[2],
+        camera: {
+          move: cameraMoveSequence[2],
+          focus: cameraFocusSequence[2],
+          intensity: cameraIntensityByTone[input.tone],
+        },
         transition: transitionSequence[2],
         template: templateSequence[2],
         symbol: symbolSequence[2],
@@ -277,6 +321,11 @@ export const generateStoryboard = (input: StoryboardInput): Storyboard => {
         visualType: visualSequence[3],
         layout: layoutSequence[3],
         motion: motionSequence[3],
+        camera: {
+          move: cameraMoveSequence[3],
+          focus: cameraFocusSequence[3],
+          intensity: cameraIntensityByTone[input.tone],
+        },
         transition: transitionSequence[3],
         template: templateSequence[3],
         symbol: symbolSequence[3],
@@ -291,6 +340,11 @@ export const generateStoryboard = (input: StoryboardInput): Storyboard => {
         visualType: visualSequence[4],
         layout: layoutSequence[4],
         motion: motionSequence[4],
+        camera: {
+          move: cameraMoveSequence[4],
+          focus: cameraFocusSequence[4],
+          intensity: cameraIntensityByTone[input.tone],
+        },
         transition: transitionSequence[4],
         template: templateSequence[4],
         symbol: symbolSequence[4],
@@ -311,6 +365,11 @@ export const generateStoryboard = (input: StoryboardInput): Storyboard => {
         visualType: visualSequence[5],
         layout: layoutSequence[5],
         motion: motionSequence[5],
+        camera: {
+          move: cameraMoveSequence[5],
+          focus: cameraFocusSequence[5],
+          intensity: cameraIntensityByTone[input.tone],
+        },
         transition: transitionSequence[5],
         template: templateSequence[5],
         symbol: symbolSequence[5],
