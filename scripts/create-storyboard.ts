@@ -74,11 +74,12 @@ STRICT RULES:
 4. Every narration must fit comfortably when spoken aloud within the scene duration (roughly 2-3 words per second).
 5. Only use values from the allowed enums listed below.
 6. Invent only facts and statistics that are plausible; prefer directional claims over hard numbers.
-7. The video is for: ${input.audience}
-8. The topic is: ${input.topic}
-9. Tone directive: ${input.tone}
-10. Aspect ratio: ${input.aspectRatio}
-${input.sources ? `11. Use these notes as grounding context:\n${input.sources}` : ""}
+7. CRITICAL: In the \`headline\` field, you MUST wrap the 1-3 most important words in asterisks (e.g. "The *rise of quantum* computing"). The renderer will use these to isolate and highlight key information.
+8. The video is for: ${input.audience}
+9. The topic is: ${input.topic}
+10. Tone directive: ${input.tone}
+11. Aspect ratio: ${input.aspectRatio}
+${input.sources ? `12. Use these notes as grounding context:\n${input.sources}` : ""}
 
 ALLOWED ENUM VALUES:
 - fontFamily: ${enumList(fontFamilies)}
@@ -143,7 +144,7 @@ COMPLETE JSON SHAPE — fill every field:
       },
       "durationSeconds": 9,
       "eyebrow": "Scene label (max 36 chars)",
-      "headline": "Punchy scene headline (max 72 chars)",
+      "headline": "Punchy scene headline with *critical words* highlighted (max 72 chars)",
       "body": "Two-sentence scene body copy that supports the headline (max 190 chars)",
       "stat": "Optional big number or word",
       "narration": "What the TTS voice reads aloud for this scene. Should be 20-40 words and feel natural when spoken.",

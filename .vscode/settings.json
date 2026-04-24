@@ -1,0 +1,4 @@
+{
+    "banditStealth.agent.autoApproveEdits": false,
+    "banditStealth.ollamaModel": "gemma2:2b"
+}

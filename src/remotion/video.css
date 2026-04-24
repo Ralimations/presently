@@ -317,6 +317,13 @@
   text-transform: uppercase;
 }
 
+/* ── Typography Highlight ── */
+.highlight-text {
+  display: inline-block;
+  color: var(--accent);
+  filter: drop-shadow(0 4px 16px color-mix(in srgb, var(--accent) 30%, transparent));
+}
+
 /* ── Vertical (9:16) adjustments ── */
 @media (max-aspect-ratio: 1/1) {
   .title-rail { left: 36px; right: 36px; font-size: 22px; }

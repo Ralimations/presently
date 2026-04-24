@@ -1,4 +1,4 @@
-import {Audio, Sequence, interpolate, staticFile, useCurrentFrame} from "remotion";
+import {Audio, Sequence, interpolate, spring, Easing, staticFile, useCurrentFrame, useVideoConfig} from "remotion";
 import type {CSSProperties} from "react";
 import {Circle, Star, Triangle as RemotionTriangle} from "@remotion/shapes";
 import {Scene, Storyboard, FPS, BackgroundStyle, LayoutMode} from "../storyboard/schema";
@@ -64,18 +64,20 @@ const cameraOrigin = {
 const cameraTransform = (scene: Scene, frame: number): string => {
   const power = cameraPower[scene.camera.intensity];
   const slow = interpolate(frame, [0, scene.durationSeconds * FPS], [0, 1], {extrapolateLeft: "clamp", extrapolateRight: "clamp"});
-  const pop = interpolate(frame, [0, 16, 42], [0, 1, 0.18], {extrapolateLeft: "clamp", extrapolateRight: "clamp"});
+  const pop = spring({fps: FPS, frame: frame - 16, config: {damping: 14}});
   const wobble = Math.sin(frame / 9) * power;
+  const baseScale = 1 + (frame / (scene.durationSeconds * FPS)) * 0.04; // Fake dimensionality
+
   switch (scene.camera.move) {
-    case "push-in":    return `scale(${1 + slow * 0.055 * power})`;
-    case "pull-back":  return `scale(${1.08 + (1 - slow) * 0.035 * power})`;
-    case "pan-left":   return `scale(${1 + 0.025 * power}) translateX(${slow * -34 * power}px)`;
-    case "pan-right":  return `scale(${1 + 0.025 * power}) translateX(${slow * 34 * power}px)`;
-    case "tilt-up":    return `scale(${1 + 0.018 * power}) translateY(${(1 - slow) * 30 * power}px)`;
-    case "focus-pop":  return `scale(${1 + pop * 0.045 * power})`;
-    case "orbit":      return `scale(${1 + 0.02 * power}) translate(${Math.sin(slow * Math.PI * 2) * 18 * power}px, ${Math.cos(slow * Math.PI * 2) * 12 * power}px)`;
-    case "handheld":   return `scale(${1 + 0.025 * power}) translate(${wobble}px, ${Math.cos(frame / 11) * power}px) rotate(${Math.sin(frame / 17) * 0.18 * power}deg)`;
-    default:           return "none";
+    case "push-in":    return `scale(${baseScale + slow * 0.055 * power})`;
+    case "pull-back":  return `scale(${baseScale + 0.08 - slow * 0.035 * power})`;
+    case "pan-left":   return `scale(${baseScale + 0.025 * power}) translateX(${slow * -34 * power}px)`;
+    case "pan-right":  return `scale(${baseScale + 0.025 * power}) translateX(${slow * 34 * power}px)`;
+    case "tilt-up":    return `scale(${baseScale + 0.018 * power}) translateY(${(1 - slow) * 30 * power}px)`;
+    case "focus-pop":  return `scale(${baseScale + pop * 0.045 * power})`;
+    case "orbit":      return `scale(${baseScale + 0.02 * power}) translate(${Math.sin(slow * Math.PI * 2) * 18 * power}px, ${Math.cos(slow * Math.PI * 2) * 12 * power}px)`;
+    case "handheld":   return `scale(${baseScale + 0.025 * power}) translate(${wobble}px, ${Math.cos(frame / 11) * power}px) rotate(${Math.sin(frame / 17) * 0.18 * power}deg)`;
+    default:           return `scale(${baseScale})`;
   }
 };
 
@@ -83,10 +85,11 @@ const cameraTransform = (scene: Scene, frame: number): string => {
 // Motion / Transition
 // ---------------------------------------------------------------------------
 const motionTransform = (motion: Scene["motion"], frame: number): string => {
-  const rise = interpolate(frame, [0, 24], [38, 0], {extrapolateLeft: "clamp", extrapolateRight: "clamp"});
-  const slide = interpolate(frame, [0, 24], [70, 0], {extrapolateLeft: "clamp", extrapolateRight: "clamp"});
-  const scale = interpolate(frame, [0, 28], [0.94, 1], {extrapolateLeft: "clamp", extrapolateRight: "clamp"});
-  const drift = interpolate(frame, [0, 280], [-12, 12], {extrapolateLeft: "clamp", extrapolateRight: "clamp"});
+  const easing = Easing.out(Easing.exp);
+  const rise = interpolate(frame, [0, 26], [45, 0], {extrapolateLeft: "clamp", extrapolateRight: "clamp", easing});
+  const slide = interpolate(frame, [0, 26], [80, 0], {extrapolateLeft: "clamp", extrapolateRight: "clamp", easing});
+  const scale = interpolate(frame, [0, 28], [0.92, 1], {extrapolateLeft: "clamp", extrapolateRight: "clamp", easing});
+  const drift = interpolate(frame, [0, 300], [-12, 12], {extrapolateLeft: "clamp", extrapolateRight: "clamp"});
   switch (motion) {
     case "slide-left": return `translateX(${slide}px)`;
     case "zoom":       return `scale(${scale})`;
@@ -132,6 +135,29 @@ const AccentShape = ({scene}: {scene: Scene}) => {
 };
 
 // ---------------------------------------------------------------------------
+// Typography Highlight
+// ---------------------------------------------------------------------------
+const HighlightText = ({text, frame, fps}: {text: string; frame: number; fps: number}) => {
+  const parts = text.split(/(\*\*?[^*]+\*\*?)/g);
+  return (
+    <>
+      {parts.map((part, i) => {
+        if (part.startsWith("*") && part.endsWith("*")) {
+          const clean = part.replace(/\*/g, "");
+          const pop = spring({fps, frame: frame - 18, config: {damping: 12}});
+          return (
+            <span key={i} className="highlight-text" style={{transform: `scale(${0.92 + pop * 0.08})`}}>
+              {clean}
+            </span>
+          );
+        }
+        return <span key={i}>{part}</span>;
+      })}
+    </>
+  );
+};
+
+// ---------------------------------------------------------------------------
 // Visual elements
 // ---------------------------------------------------------------------------
 const BarChart = ({scene, frame}: {scene: Scene; frame: number}) => {
@@ -139,8 +165,9 @@ const BarChart = ({scene, frame}: {scene: Scene; frame: number}) => {
   return (
     <div className="v-bars">
       {data.map((item, i) => {
-        const w = interpolate(frame, [18 + i * 6, 58 + i * 6], [0, item.value], {extrapolateLeft: "clamp", extrapolateRight: "clamp"});
-        const op = interpolate(frame, [8 + i * 5, 22 + i * 5], [0, 1], {extrapolateLeft: "clamp", extrapolateRight: "clamp"});
+        const delay = 15 + i * 15;
+        const w = interpolate(frame, [delay, delay + 50], [0, item.value], {extrapolateLeft: "clamp", extrapolateRight: "clamp", easing: Easing.out(Easing.exp)});
+        const op = interpolate(frame, [delay - 5, delay + 10], [0, 1], {extrapolateLeft: "clamp", extrapolateRight: "clamp"});
         return (
           <div className="v-barRow" key={item.label} style={{opacity: op}}>
             <span>{item.label}</span>
@@ -158,9 +185,10 @@ const KineticText = ({scene, frame}: {scene: Scene; frame: number}) => {
   return (
     <div className="v-kinetic">
       {words.map((word, i) => {
-        const enter = interpolate(frame, [10 + i * 7, 25 + i * 7], [28, 0], {extrapolateLeft: "clamp", extrapolateRight: "clamp"});
-        const s = interpolate(frame, [10 + i * 7, 25 + i * 7], [0.78, 1], {extrapolateLeft: "clamp", extrapolateRight: "clamp"});
-        return <span key={`${word}-${i}`} style={{opacity: s, transform: `translateY(${enter}px) scale(${s})`}}>{word}</span>;
+        const delay = 10 + i * 12;
+        const enter = interpolate(frame, [delay, delay + 20], [28, 0], {extrapolateLeft: "clamp", extrapolateRight: "clamp", easing: Easing.out(Easing.exp)});
+        const s = spring({fps: FPS, frame: frame - delay, config: {damping: 14}});
+        return <span key={`${word}-${i}`} style={{transform: `translateY(${enter}px) scale(${0.7 + s * 0.3})`}}>{word}</span>;
       })}
     </div>
   );
@@ -170,22 +198,25 @@ const Timeline = ({scene, frame}: {scene: Scene; frame: number}) => {
   const steps = scene.keywords ?? ["Frame", "Signal", "Action"];
   return (
     <div className="v-timeline">
-      {steps.slice(0, 4).map((step, i) => (
-        <div className="v-step" key={step} style={{opacity: interpolate(frame, [10 + i * 10, 28 + i * 10], [0, 1], {extrapolateLeft: "clamp", extrapolateRight: "clamp"})}}>
-          <span>{String(i + 1).padStart(2, "0")}</span>
-          <strong>{step}</strong>
-        </div>
-      ))}
+      {steps.slice(0, 4).map((step, i) => {
+        const delay = 10 + i * 16;
+        return (
+          <div className="v-step" key={step} style={{opacity: interpolate(frame, [delay, delay + 18], [0, 1], {extrapolateLeft: "clamp", extrapolateRight: "clamp", easing: Easing.out(Easing.quad)})}}>
+            <span>{String(i + 1).padStart(2, "0")}</span>
+            <strong>{step}</strong>
+          </div>
+        );
+      })}
     </div>
   );
 };
 
 const Comparison = ({scene, frame}: {scene: Scene; frame: number}) => (
   <div className="v-compare">
-    <div style={{transform: `translateX(${interpolate(frame, [8, 34], [-44, 0], {extrapolateLeft: "clamp", extrapolateRight: "clamp"})}px)`}}>
+    <div style={{transform: `translateX(${interpolate(frame, [8, 38], [-54, 0], {extrapolateLeft: "clamp", extrapolateRight: "clamp", easing: Easing.out(Easing.exp)})}px)`}}>
       <span>Before</span><strong>{scene.compare?.left ?? "Old approach"}</strong>
     </div>
-    <div style={{transform: `translateX(${interpolate(frame, [18, 44], [44, 0], {extrapolateLeft: "clamp", extrapolateRight: "clamp"})}px)`}}>
+    <div style={{transform: `translateX(${interpolate(frame, [22, 52], [54, 0], {extrapolateLeft: "clamp", extrapolateRight: "clamp", easing: Easing.out(Easing.exp)})}px)`}}>
       <span>After</span><strong>{scene.compare?.right ?? "New approach"}</strong>
     </div>
   </div>
@@ -195,15 +226,18 @@ const Diagram = ({scene, frame}: {scene: Scene; frame: number}) => {
   const nodes = scene.keywords ?? ["input", "signal", "decision"];
   return (
     <div className="v-diagram">
-      {nodes.slice(0, 4).map((node, i) => (
-        <div className="v-node" key={node} style={{
-          opacity: interpolate(frame, [12 + i * 10, 28 + i * 10], [0, 1], {extrapolateLeft: "clamp", extrapolateRight: "clamp"}),
-          transform: `translateY(${interpolate(frame, [12 + i * 10, 32 + i * 10], [34, 0], {extrapolateLeft: "clamp", extrapolateRight: "clamp"})}px)`,
-        }}>
-          <div className="v-nodeNum">{i + 1}</div>
-          <strong>{node}</strong>
-        </div>
-      ))}
+      {nodes.slice(0, 4).map((node, i) => {
+        const delay = 10 + i * 14;
+        return (
+          <div className="v-node" key={node} style={{
+            opacity: interpolate(frame, [delay, delay + 16], [0, 1], {extrapolateLeft: "clamp", extrapolateRight: "clamp"}),
+            transform: `translateY(${interpolate(frame, [delay, delay + 24], [34, 0], {extrapolateLeft: "clamp", extrapolateRight: "clamp", easing: Easing.out(Easing.exp)})}px)`,
+          }}>
+            <div className="v-nodeNum">{i + 1}</div>
+            <strong>{node}</strong>
+          </div>
+        );
+      })}
     </div>
   );
 };
@@ -213,9 +247,11 @@ const StatWall = ({scene, frame}: {scene: Scene; frame: number}) => {
   return (
     <div className="v-statWall">
       {data.slice(0, 4).map((item, i) => {
-        const val = interpolate(frame, [18 + i * 5, 58 + i * 5], [0, item.value], {extrapolateLeft: "clamp", extrapolateRight: "clamp"});
+        const delay = 15 + i * 12;
+        const val = interpolate(frame, [delay, delay + 45], [0, item.value], {extrapolateLeft: "clamp", extrapolateRight: "clamp", easing: Easing.out(Easing.exp)});
+        const s = spring({fps: FPS, frame: frame - delay + 5, config: {damping: 15}});
         return (
-          <div className="v-statTile" key={item.label} style={{transform: `scale(${interpolate(frame, [8 + i * 8, 28 + i * 8], [0.86, 1], {extrapolateLeft: "clamp", extrapolateRight: "clamp"})})`}}>
+          <div className="v-statTile" key={item.label} style={{transform: `scale(${s})`}}>
             <strong>{Math.round(val)}</strong><span>{item.label}</span>
           </div>
         );
@@ -323,7 +359,7 @@ const SceneCard = ({scene, storyboard, index}: {scene: Scene; storyboard: Storyb
               fontWeight: typo.headlineWeight,
               textTransform: (typo.headlineTransform ?? "uppercase") as CSSProperties["textTransform"],
             }}>
-              {scene.headline}
+              <HighlightText text={scene.headline} frame={frame} fps={FPS} />
             </h1>
             <p style={{fontSize: BODY_SIZE[typo.bodySize]}}>{scene.body}</p>
             {scene.stat && <div className="sc-stat">{scene.stat}</div>}
