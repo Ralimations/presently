@@ -1,107 +1,181 @@
-# Presently
+# Presently — Local AI Video Studio
 
-Prompt-driven MVP for one-minute infographic videos. The user enters one prompt; the app automatically creates a validated storyboard, page layouts, transitions, a music prompt, and a Remotion render plan.
+Generate fully-narrated, 60-second infographic videos from a single text prompt.
+Everything runs **locally** on your machine — no API keys, no cloud services.
 
-## Run
+---
 
-```bash
+## What it does
+
+1. **LLM designs the video** — Qwen 2.5 7B (via Ollama) reads your prompt and produces a complete storyboard: color palette, layout per scene, typography, camera moves, data visualizations, narration scripts, and a music brief.
+2. **Kokoro TTS narrates each scene** — a fast ONNX voice model reads the narration text and generates per-scene WAV files.
+3. **MusicGen generates the soundtrack** — Meta's MusicGen-small creates an original 60-second instrumental track from the LLM's music description.
+4. **Remotion renders the video** — a fully dynamic renderer (no templates) turns the LLM's JSON into a polished MP4 with animated charts, kinetic text, camera moves, and synced audio.
+
+**All open-source. All local. Designed for RTX 2060 (6 GB VRAM) / 32 GB RAM.**
+
+---
+
+## Requirements
+
+| Dependency | Version |
+|---|---|
+| Node.js | 18+ |
+| Python | 3.11 |
+| Ollama | latest |
+| NVIDIA GPU | RTX 2060 or better (CPU fallback supported) |
+| RAM | 16 GB minimum, 32 GB recommended |
+
+---
+
+## Quick Start
+
+### 1. Install dependencies
+
+```powershell
+# Install Node packages
 npm install
-npm run dev
-```
 
-On Windows, use the launcher:
-
-```powershell
-.\run_presently.ps1
-```
-
-## Render
-
-```bash
-npm run music:placeholder
-npm run storyboard -- --topic="The future of urban farming" --audience="city planners" --tone=clear --aspect=16:9
-npm run render:storyboard
-```
-
-The web app handles storyboard saving, music generation, still rendering, and MP4 rendering from the Renders tab.
-Project history, loading, duplication, deletion, render quality, and generation defaults are handled from the Settings tab.
-
-Generated files stay inside the project under:
-
-- `output/storyboards/storyboard.json`
-- `output/projects/*.json`
-- `public/output/videos/infographic.mp4`
-- `public/output/stills/frame.png`
-- `output/site`
-- `public/output/music/placeholder.wav`
-
-## Architecture
-
-- `src/storyboard/schema.ts` is the safety boundary for LLM output.
-- `src/storyboard/generateStoryboard.ts` simulates the LLM reprompting flow and can be replaced by an LLM call returning the same schema.
-- `src/remotion/index.ts` is the Remotion entrypoint registered through `registerRoot()`.
-- `src/remotion/Root.tsx` defines the Remotion composition and dynamic metadata.
-- `src/remotion/InfographicMinute.tsx` is the trusted React/Remotion renderer.
-- `src/music/providers.ts` defines the provider seam for ACE-Step or MusicGen integration.
-- `scripts/create-placeholder-music.ts` creates a local 60-second WAV so Remotion renders include music before model integration.
-
-## Generation Flow
-
-1. User enters a prompt.
-2. The prompt is refined into `refinedPrompt.sitePrompt`, `refinedPrompt.musicPrompt`, and `refinedPrompt.renderBrief`.
-3. The music prompt is sent to the music provider seam.
-4. The site prompt becomes a structured Remotion storyboard with scene pages, layout variants, transitions, motion presets, copy, and chart data.
-5. Each scene can include schema-controlled camera direction such as push-in, pan, tilt, focus-pop, orbit, or pull-back.
-6. Remotion combines the trusted scene plan and generated music asset into the final video.
-
-Users do not need to edit individual pages. Settings are only for high-level defaults such as audience, tone, aspect ratio, refined prompts, and output paths.
-
-## Local LLM
-
-The app can use the built-in deterministic generator or a local Ollama model from the Settings tab. For a low-requirement laptop model:
-
-```powershell
-.\install_local_llm.ps1
-```
-
-Then set:
-
-- Provider: `Ollama local`
-- Model: `qwen3:0.6b`
-- API URL: `http://localhost:11434`
-
-Ollama output is parsed as JSON and validated against the storyboard schema. If the model is offline or returns invalid JSON, the app falls back to the built-in generator.
-
-## Remotion Integration
-
-- `remotion.config.ts` sets the Remotion entrypoint and public asset folder.
-- `npm run remotion` opens Remotion Studio using the configured entrypoint.
-- `npm run render:storyboard` renders the `InfographicMinute` composition with `output/storyboards/storyboard.json`.
-- Remotion packages are pinned to the same exact version to avoid package mismatch issues.
-
-## Asset Packs
-
-The renderer has built-in font-pair, symbol, texture, transition, and template variants. To download larger external packs for future integration, run:
-
-```bash
-npm run assets:install
-```
-
-This installs icon libraries, Remotion visual packages, and local font packages while keeping the user workflow prompt-only.
-
-## Open-Source AI Models
-
-Heavy local models should be installed on a stronger machine:
-
-```powershell
+# Install Python AI stack (in models/.venv)
 .\install_open_source_ai_models.ps1 -Torch cuda
 ```
 
-See `docs/open-source-models.md` for GPU/CPU options and model notes.
+### 2. Pull the LLM
 
-## Production Notes
+```powershell
+ollama pull qwen2.5:7b
+```
 
-- Keep LLM output constrained to storyboard JSON. Do not execute generated React.
-- Validate exact 60-second timing before rendering.
-- Verify Remotion licensing and music model licensing before commercial launch.
-- Add retrieval/citations before positioning factual explainers as authoritative.
+### 3. Start the model server (TTS + MusicGen)
+
+```powershell
+.\run_model_server.ps1
+```
+
+Endpoints available at `http://localhost:8001`:
+- `GET  /status` — check which models are loaded
+- `POST /speech/batch` — generate narration WAVs for all scenes
+- `POST /music` — generate background music track
+
+### 4. Start Presently
+
+```powershell
+npm run dev
+```
+
+Open **http://localhost:5173**
+
+### One-command local stack
+
+You can start Ollama, the model server, and the Presently site in separate PowerShell windows:
+
+```powershell
+.\run_presently_stack.ps1
+```
+
+Use flags when needed:
+
+```powershell
+.\run_presently_stack.ps1 -SkipOllama
+.\run_presently_stack.ps1 -SkipModelServer
+.\run_presently_stack.ps1 -OllamaModel qwen2.5:3b
+```
+
+---
+
+## How to generate a video
+
+1. Type your topic in the prompt field (e.g. *"The history of space exploration"*)
+2. Set the audience, format, and voice
+3. Select your LLM (Qwen 2.5 7B recommended)
+4. Choose music: **Synth placeholder** (instant) or **MusicGen** (requires model server)
+5. Click **Generate video** or press `⌘ Enter`
+
+The pipeline runs in order:
+```
+LLM → Narration (Kokoro TTS) → Music (MusicGen) → Remotion render
+```
+
+The model server status badge in the top-right corner shows green when TTS and MusicGen are available. If it's red, the video still generates but without spoken narration or AI music.
+
+---
+
+## VRAM Management (RTX 2060, 6 GB)
+
+| Stage | VRAM used | Notes |
+|---|---|---|
+| LLM (Qwen 2.5 7B Q4) | ~4.5 GB | Ollama auto-evicts after idle |
+| MusicGen-small | ~600 MB | Runs after LLM finishes |
+| Kokoro TTS | 0 GB | CPU only (ONNX) |
+| Remotion render | 0 GB | Node.js / CPU |
+
+The pipeline is **sequential** — LLM runs first, then Ollama evicts from VRAM, then MusicGen uses the freed GPU. You will not run out of VRAM.
+
+---
+
+## Available models (LLM)
+
+All accessed via Ollama. Pull with `ollama pull <model>`:
+
+| Model | VRAM | Quality | Speed |
+|---|---|---|---|
+| `qwen2.5:7b` | 4.5 GB | ⭐⭐⭐⭐ Best JSON | Moderate |
+| `qwen2.5:3b` | 2.2 GB | ⭐⭐⭐ Good | Fast |
+| `mistral:7b` | 4.5 GB | ⭐⭐⭐ Good | Moderate |
+| `llama3.2:3b` | 2.2 GB | ⭐⭐ Decent | Fast |
+| `gemma3:4b` | 2.8 GB | ⭐⭐⭐ Good | Moderate |
+
+If Ollama is not running, the **Built-in (offline)** option uses a deterministic fallback storyboard.
+
+---
+
+## TTS Voices (Kokoro)
+
+| Voice ID | Character |
+|---|---|
+| `af_heart` | Warm American female (default) |
+| `af_bella` | Bright American female |
+| `am_michael` | Deep American male |
+| `af_sarah` | Calm American female |
+
+Voices auto-download on first use (~165 MB total).
+
+---
+
+## Project structure
+
+```
+presently-1/
+├── models/
+│   ├── model_server.py          ← FastAPI server (TTS + MusicGen)
+│   ├── requirements-model-server.txt
+│   └── .venv/                   ← Python virtual environment
+├── scripts/
+│   └── create-storyboard.ts     ← LLM prompt + Ollama integration
+├── server/
+│   └── dev-server.mjs           ← Orchestration API + Vite proxy
+├── src/
+│   ├── remotion/
+│   │   ├── InfographicMinute.tsx ← Dynamic Remotion renderer (no templates)
+│   │   └── video.css            ← Design system
+│   ├── storyboard/
+│   │   ├── schema.ts            ← Zod schema (LLM output contract)
+│   │   └── generateStoryboard.ts ← Built-in fallback storyboard
+│   └── main.tsx                 ← React UI
+├── run_model_server.ps1         ← Start TTS + MusicGen server
+└── install_open_source_ai_models.ps1
+```
+
+---
+
+## Troubleshooting
+
+**"Model server offline" badge** — Run `.\run_model_server.ps1` in a separate terminal. First run downloads Kokoro voice models (~165 MB).
+
+**Ollama not found** — Install from https://ollama.ai then run `ollama pull qwen2.5:7b`.
+
+**MusicGen out of VRAM** — Let Ollama finish and idle for ~30s first. Or switch to "Synth placeholder" music.
+
+**Video has no audio** — The model server was offline during generation. Start the model server and regenerate.
+
+**LLM storyboard validation fails** — Switch to `qwen2.5:7b` (best structured JSON output). The built-in fallback activates automatically.

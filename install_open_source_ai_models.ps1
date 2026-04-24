@@ -77,14 +77,23 @@ Invoke-Step "Install shared model tooling" {
 
 if (-not $SkipMusic) {
   Invoke-Step "Install music generation tooling" {
-    & $PythonPath -m pip install audiocraft
+    if ($Torch -eq "cuda") {
+      Write-Host "MusicGen/ACE-Step CUDA tooling is heavy for 6GB VRAM. Continuing because -Torch cuda was selected."
+      & $PythonPath -m pip install audiocraft
+    } else {
+      Write-Host "Skipping heavy MusicGen CUDA package on the CPU/RTX 2060-safe profile."
+    }
 
     $AceStepPath = Join-Path $ModelsPath "ACE-Step"
     if (-not (Test-Path $AceStepPath)) {
       git clone https://github.com/ace-step/ACE-Step.git $AceStepPath
     }
 
-    & $PythonPath -m pip install -r (Join-Path $AceStepPath "requirements.txt")
+    if ($Torch -eq "cuda") {
+      & $PythonPath -m pip install -r (Join-Path $AceStepPath "requirements.txt")
+    } else {
+      & $PythonPath -m pip install -e $AceStepPath --no-deps
+    }
   }
 }
 
@@ -95,14 +104,23 @@ if (-not $SkipImages) {
 }
 
 if (-not $SkipSpeech) {
-  Invoke-Step "Install speech tooling" {
-    & $PythonPath -m pip install openai-whisper faster-whisper
+  Invoke-Step "Install Kokoro TTS (narration)" {
+    # Kokoro-ONNX: Apache 2.0, CPU-friendly, ~165MB, natural voice
+    & $PythonPath -m pip install kokoro-onnx soundfile
+    Write-Host "Kokoro TTS installed. Voice models auto-download on first use."
+  }
+
+  Invoke-Step "Install model server dependencies" {
+    $ModelReqs = Join-Path $ModelsPath "requirements-model-server.txt"
+    if (Test-Path $ModelReqs) {
+      & $PythonPath -m pip install -r $ModelReqs
+    }
   }
 }
 
 if (-not $SkipLlm) {
-  Invoke-Step "Install local LLM tooling" {
-    & $PythonPath -m pip install llama-cpp-python
+  Invoke-Step "Install local LLM tooling (llama-cpp-python CPU wheel)" {
+    & $PythonPath -m pip install llama-cpp-python==0.3.19 --extra-index-url https://abetlen.github.io/llama-cpp-python/whl/cpu
   }
 }
 
@@ -111,9 +129,12 @@ Invoke-Step "Write environment file" {
   @(
     "PRESENTLY_MODELS_DIR=$ModelsPath",
     "PRESENTLY_PYTHON=$PythonPath",
-    "PRESENTLY_MUSIC_PROVIDER=placeholder",
+    "PRESENTLY_MUSIC_PROVIDER=musicgen",
+    "PRESENTLY_MODEL_SERVER_PORT=8001",
     "PRESENTLY_IMAGE_PROVIDER=local",
-    "PRESENTLY_LLM_PROVIDER=local"
+    "PRESENTLY_LLM_PROVIDER=ollama",
+    "PRESENTLY_OLLAMA_MODEL=qwen2.5:7b",
+    "PRESENTLY_OLLAMA_URL=http://localhost:11434"
   ) | Set-Content -Path $envFile -Encoding UTF8
 
   Write-Host "Wrote $envFile"
@@ -121,5 +142,11 @@ Invoke-Step "Write environment file" {
 
 Write-Host ""
 Write-Host "Open-source model tooling installed."
-Write-Host "Activate with: $VenvPath\Scripts\Activate.ps1"
+Write-Host ""
+Write-Host "Next steps:"
+Write-Host "  1. Pull the LLM:       ollama pull qwen2.5:7b"
+Write-Host "  2. Start model server: .\run_model_server.ps1"
+Write-Host "  3. Start Presently:    .\run_presently.ps1"
+Write-Host ""
+Write-Host "Activate venv: $VenvPath\Scripts\Activate.ps1"
 Write-Host "Models folder: $ModelsPath"

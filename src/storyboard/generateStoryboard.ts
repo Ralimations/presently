@@ -1,18 +1,10 @@
 import {
-  ArtDirection,
   AspectRatio,
-  CameraFocus,
-  CameraIntensity,
-  CameraMove,
-  FontPair,
-  LayoutType,
-  MotionType,
+  BackgroundStyle,
+  FontFamily,
   Storyboard,
-  SymbolName,
-  TemplateType,
-  TextureType,
   Tone,
-  TransitionType,
+  TtsVoice,
   type Scene,
   validateStoryboard,
 } from "./schema";
@@ -23,8 +15,12 @@ export type StoryboardInput = {
   tone: Tone;
   aspectRatio: AspectRatio;
   sources?: string;
+  speechVoice?: TtsVoice;
 };
 
+// ---------------------------------------------------------------------------
+// Default palettes by tone
+// ---------------------------------------------------------------------------
 const paletteByTone: Record<Tone, Storyboard["palette"]> = {
   clear: {
     background: "#f4efe3",
@@ -58,328 +54,176 @@ const paletteByTone: Record<Tone, Storyboard["palette"]> = {
   },
 };
 
+const fontByTone: Record<Tone, FontFamily> = {
+  clear: "humanist",
+  bold: "grotesk",
+  academic: "serif",
+  startup: "grotesk",
+  cinematic: "condensed",
+};
+
+const globalBgByTone: Record<Tone, BackgroundStyle> = {
+  clear: {type: "gradient", primary: "#f4efe3", secondary: "#e8e0cc", angle: 160},
+  bold: {type: "radial", primary: "#111217", secondary: "#1c1f2e"},
+  academic: {type: "noise-gradient", primary: "#ebe7dc", secondary: "#d8d0be", angle: 135},
+  startup: {type: "gradient", primary: "#eff7f1", secondary: "#daf0e4", angle: 140},
+  cinematic: {type: "radial", primary: "#0d1117", secondary: "#14202e"},
+};
+
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
 const clampTopic = (topic: string) =>
   topic.trim().replace(/\s+/g, " ").slice(0, 110) || "an emerging idea";
 
-const artDirectionByTone: Record<Tone, ArtDirection> = {
-  clear: "minimal",
-  bold: "editorial",
-  academic: "technical",
-  startup: "playful",
-  cinematic: "cinematic",
+const limitText = (text: string, maxLength: number) => {
+  const normalized = text.trim().replace(/\s+/g, " ");
+  if (normalized.length <= maxLength) return normalized;
+  const clipped = normalized.slice(0, maxLength - 1);
+  const lastSpace = clipped.lastIndexOf(" ");
+  return `${clipped.slice(0, lastSpace > 30 ? lastSpace : clipped.length).trim()}.`;
 };
 
-const fontPairByTone: Record<Tone, FontPair> = {
-  clear: "geometric-humanist",
-  bold: "grotesk-serif",
-  academic: "editorial-mono",
-  startup: "grotesk-serif",
-  cinematic: "cinematic-condensed",
-};
-
-const textureByTone: Record<Tone, TextureType> = {
-  clear: "clean",
-  bold: "grain",
-  academic: "grid",
-  startup: "orbits",
-  cinematic: "contour",
-};
-
-const layoutSequence: LayoutType[] = [
-  "poster",
-  "editorial",
-  "split-card",
-  "stacked",
-  "dashboard",
-  "poster",
-];
-
-const motionSequence: MotionType[] = [
-  "zoom",
-  "slide-left",
-  "rise",
-  "wipe",
-  "drift",
-  "rise",
-];
-
-const cameraMoveSequence: CameraMove[] = [
-  "push-in",
-  "pan-left",
-  "focus-pop",
-  "tilt-up",
-  "orbit",
-  "pull-back",
-];
-
-const cameraFocusSequence: CameraFocus[] = [
-  "headline",
-  "visual",
-  "stat",
-  "center",
-  "right",
-  "center",
-];
-
-const cameraIntensityByTone: Record<Tone, CameraIntensity> = {
-  clear: "subtle",
-  bold: "medium",
-  academic: "subtle",
-  startup: "medium",
-  cinematic: "strong",
-};
-
-const transitionSequence: TransitionType[] = [
-  "iris",
-  "push",
-  "fade",
-  "wipe",
-  "blur",
-  "flip",
-];
-
-const templateSequence: TemplateType[] = [
-  "briefing",
-  "magazine",
-  "data-room",
-  "product-demo",
-  "kinetic",
-  "cinematic-essay",
-];
-
-const symbolSequence: SymbolName[] = [
-  "spark",
-  "map",
-  "network",
-  "stack",
-  "signal",
-  "prism",
-];
-
-const defaultVisualSequence: Scene["visualType"][] = [
-  "hero-stat",
-  "timeline",
-  "comparison",
-  "process",
-  "chart",
-  "summary",
-];
-
-const extendedVisualSequence: Scene["visualType"][] = [
-  "kinetic-text",
-  "map",
-  "myth-fact",
-  "diagram",
-  "stat-wall",
-  "before-after",
-];
-
-const pickVisualSequence = (input: StoryboardInput): Scene["visualType"][] => {
-  const prompt = `${input.topic} ${input.sources ?? ""}`.toLowerCase();
-
-  if (
-    prompt.includes("map") ||
-    prompt.includes("city") ||
-    prompt.includes("urban") ||
-    prompt.includes("global") ||
-    prompt.includes("where")
-  ) {
-    return ["hero-stat", "map", "diagram", "before-after", "stat-wall", "summary"];
-  }
-
-  if (
-    prompt.includes("myth") ||
-    prompt.includes("debunk") ||
-    prompt.includes("misconception")
-  ) {
-    return ["kinetic-text", "myth-fact", "comparison", "diagram", "quote", "summary"];
-  }
-
-  if (input.tone === "cinematic" || input.tone === "bold") {
-    return extendedVisualSequence;
-  }
-
-  return defaultVisualSequence;
-};
-
-export const refinePrompt = (input: StoryboardInput) => {
-  const topic = clampTopic(input.topic);
-  const audience = input.audience.trim() || "curious viewers";
-  const sourceDirection = input.sources?.trim()
-    ? "Use the provided notes as grounding context without overloading the visuals."
-    : "Use general explanatory framing and avoid unsupported hard statistics.";
-  const artDirection = artDirectionByTone[input.tone];
-  const sitePrompt = [
-    `Create a 60-second ${input.aspectRatio} ${artDirection} infographic video site about ${topic}.`,
-    `Audience: ${audience}. Tone: ${input.tone}.`,
-    "Build it as six distinct pages with different layouts, clear transitions, sparse copy, and one visual argument per page.",
-    sourceDirection,
-  ].join(" ");
-  const musicPrompt = [
-    `${input.tone} instrumental bed for a one-minute explainer about ${topic}.`,
-    "No vocals, steady pacing, subtle transitions every 9-12 seconds, clean ending.",
-  ].join(" ");
-
-  return {
-    userPrompt: input.sources?.trim() || input.topic,
-    sitePrompt,
-    musicPrompt,
-    renderBrief:
-      "Render the trusted Remotion block plan to MP4, align scene transitions to the music bed, and keep total duration at exactly 60 seconds.",
-  };
-};
-
+// ---------------------------------------------------------------------------
+// Fallback storyboard (used when LLM is unavailable)
+// ---------------------------------------------------------------------------
 export const generateStoryboard = (input: StoryboardInput): Storyboard => {
   const topic = clampTopic(input.topic);
+  const shortTopic = limitText(topic, 54);
   const audience = input.audience.trim() || "curious viewers";
-  const context = input.sources?.trim()
-    ? ` using the provided source context`
-    : "";
-  const refinedPrompt = refinePrompt(input);
-  const visualSequence = pickVisualSequence(input);
+  const palette = paletteByTone[input.tone];
+  const fontFamily = fontByTone[input.tone];
+  const globalBackground = globalBgByTone[input.tone];
+
+  const musicPrompt = limitText(
+    `${input.tone} instrumental bed for a one-minute explainer about ${topic}. No vocals, steady pacing, clean ending, subtle transitions every 9-12 seconds.`,
+    280,
+  );
+
+  const scenes: Scene[] = [
+    {
+      id: "hook",
+      visualType: "hero-stat",
+      layoutMode: "centered",
+      motion: "zoom",
+      camera: {move: "push-in", focus: "center", intensity: "medium"},
+      transition: "iris",
+      accentShape: "circle",
+      accentPosition: "top-right",
+      typography: {headlineSize: "display", headlineWeight: "900", headlineTransform: "uppercase", bodySize: "lg"},
+      durationSeconds: 9,
+      eyebrow: "The Big Picture",
+      headline: `Why ${shortTopic} matters now`,
+      body: `Frame the topic for ${audience}: what changed, why it matters, and what to watch for.`,
+      narration: `Here is why ${shortTopic} matters right now. Something shifted, and ${audience} needs to know about it.`,
+      stat: "60 sec",
+    },
+    {
+      id: "context",
+      visualType: "timeline",
+      layoutMode: "split-left",
+      motion: "slide-left",
+      camera: {move: "pan-left", focus: "visual", intensity: "subtle"},
+      transition: "push",
+      accentShape: "none",
+      accentPosition: "none",
+      typography: {headlineSize: "3xl", headlineWeight: "700", headlineTransform: "uppercase", bodySize: "md"},
+      durationSeconds: 9,
+      eyebrow: "Context",
+      headline: "The shift did not happen overnight",
+      body: `Show the before state, the inflection point, and the new reality created by ${shortTopic}.`,
+      narration: `This did not happen overnight. Let us trace how ${shortTopic} evolved and what made the change inevitable.`,
+      keywords: ["before", "turning point", "now"],
+    },
+    {
+      id: "contrast",
+      visualType: "comparison",
+      layoutMode: "split-right",
+      motion: "rise",
+      camera: {move: "focus-pop", focus: "stat", intensity: "medium"},
+      transition: "fade",
+      accentShape: "triangle",
+      accentPosition: "bottom-left",
+      typography: {headlineSize: "3xl", headlineWeight: "700", headlineTransform: "uppercase", bodySize: "md"},
+      durationSeconds: 10,
+      eyebrow: "Contrast",
+      headline: "Old model vs. new reality",
+      body: `Compare the familiar assumption against the more useful way to understand ${shortTopic} today.`,
+      narration: `The old model said one thing. The new reality says another. Here is the contrast that matters most.`,
+      compare: {left: "Old model", right: "New reality"},
+    },
+    {
+      id: "mechanism",
+      visualType: "diagram",
+      layoutMode: "split-left",
+      motion: "wipe",
+      camera: {move: "tilt-up", focus: "headline", intensity: "subtle"},
+      transition: "wipe",
+      accentShape: "circle",
+      accentPosition: "center-bg",
+      typography: {headlineSize: "2xl", headlineWeight: "700", headlineTransform: "uppercase", bodySize: "md"},
+      durationSeconds: 10,
+      eyebrow: "Mechanism",
+      headline: "Three moves create the outcome",
+      body: "Input becomes signal. Signal drives a decision. Decision compounds into visible results.",
+      narration: "The system works in three moves. Input generates a signal, the signal drives a decision, and decisions compound into real outcomes.",
+      keywords: ["input", "signal", "decision"],
+    },
+    {
+      id: "evidence",
+      visualType: "bar-chart",
+      layoutMode: "data-focus",
+      motion: "drift",
+      camera: {move: "orbit", focus: "visual", intensity: "subtle"},
+      transition: "blur",
+      accentShape: "none",
+      accentPosition: "none",
+      typography: {headlineSize: "2xl", headlineWeight: "700", headlineTransform: "uppercase", bodySize: "sm"},
+      durationSeconds: 10,
+      eyebrow: "Evidence",
+      headline: "Look for directional proof",
+      body: "Use credible signals — adoption, cost, speed, trust — before making strong claims.",
+      narration: "Before accepting any claim, look for directional proof. Adoption, cost savings, speed, and trust are the right signals to watch.",
+      chartData: [
+        {label: "Reach", value: 64},
+        {label: "Speed", value: 82},
+        {label: "Cost", value: 48},
+        {label: "Trust", value: 70},
+      ],
+    },
+    {
+      id: "takeaway",
+      visualType: "kinetic-text",
+      layoutMode: "fullscreen-text",
+      motion: "rise",
+      camera: {move: "pull-back", focus: "center", intensity: "medium"},
+      transition: "flip",
+      accentShape: "star",
+      accentPosition: "top-right",
+      typography: {headlineSize: "4xl", headlineWeight: "900", headlineTransform: "uppercase", bodySize: "lg"},
+      durationSeconds: 12,
+      eyebrow: "Takeaway",
+      headline: "The practical read",
+      body: `${shortTopic} is clearest when the story moves from why now, to how it works, to what action ${audience} should take.`,
+      narration: `To sum up: ${shortTopic} is real, it is happening now, and ${audience} should know exactly what to do next.`,
+      stat: "3 ideas",
+      keywords: ["why now", "how it works", "act"],
+    },
+  ];
 
   return validateStoryboard({
-    title: `${topic}: the one-minute briefing`,
+    title: `${shortTopic}: the one-minute briefing`,
     topic,
     audience,
     tone: input.tone,
     aspectRatio: input.aspectRatio,
-    artDirection: artDirectionByTone[input.tone],
-    fontPair: fontPairByTone[input.tone],
-    texture: textureByTone[input.tone],
-    refinedPrompt,
-    musicPrompt: refinedPrompt.musicPrompt,
-    palette: paletteByTone[input.tone],
-    scenes: [
-      {
-        id: "hook",
-        visualType: visualSequence[0],
-        layout: layoutSequence[0],
-        motion: motionSequence[0],
-        camera: {
-          move: cameraMoveSequence[0],
-          focus: cameraFocusSequence[0],
-          intensity: cameraIntensityByTone[input.tone],
-        },
-        transition: transitionSequence[0],
-        template: templateSequence[0],
-        symbol: symbolSequence[0],
-        durationSeconds: 9,
-        eyebrow: "The hook",
-        headline: `Why ${topic} matters now`,
-        body: `Frame the topic for ${audience}${context}: what changed, why it is urgent, and what viewers should watch next.`,
-        stat: "60 sec",
-        keywords: ["why now", "signal", "stakes"],
-      },
-      {
-        id: "context",
-        visualType: visualSequence[1],
-        layout: layoutSequence[1],
-        motion: motionSequence[1],
-        camera: {
-          move: cameraMoveSequence[1],
-          focus: cameraFocusSequence[1],
-          intensity: cameraIntensityByTone[input.tone],
-        },
-        transition: transitionSequence[1],
-        template: templateSequence[1],
-        symbol: symbolSequence[1],
-        durationSeconds: 9,
-        eyebrow: "Context",
-        headline: "The shift did not happen overnight",
-        body: `Show the before state, the inflection point, and the new behavior or opportunity created by ${topic}.`,
-        keywords: ["before", "turning point", "now"],
-      },
-      {
-        id: "contrast",
-        visualType: visualSequence[2],
-        layout: layoutSequence[2],
-        motion: motionSequence[2],
-        camera: {
-          move: cameraMoveSequence[2],
-          focus: cameraFocusSequence[2],
-          intensity: cameraIntensityByTone[input.tone],
-        },
-        transition: transitionSequence[2],
-        template: templateSequence[2],
-        symbol: symbolSequence[2],
-        durationSeconds: 10,
-        eyebrow: "Contrast",
-        headline: "Old model vs. new reality",
-        body: `Compare the familiar assumption against the more useful way to understand ${topic} today.`,
-        chartData: [
-          {label: "Old", value: 42},
-          {label: "New", value: 78},
-        ],
-        compare: {
-          left: "Old model",
-          right: "New reality",
-        },
-      },
-      {
-        id: "mechanism",
-        visualType: visualSequence[3],
-        layout: layoutSequence[3],
-        motion: motionSequence[3],
-        camera: {
-          move: cameraMoveSequence[3],
-          focus: cameraFocusSequence[3],
-          intensity: cameraIntensityByTone[input.tone],
-        },
-        transition: transitionSequence[3],
-        template: templateSequence[3],
-        symbol: symbolSequence[3],
-        durationSeconds: 10,
-        eyebrow: "Mechanism",
-        headline: "The system works in three moves",
-        body: "Input becomes signal, signal drives a decision, and the decision compounds into visible outcomes.",
-        keywords: ["input", "signal", "decision"],
-      },
-      {
-        id: "proof",
-        visualType: visualSequence[4],
-        layout: layoutSequence[4],
-        motion: motionSequence[4],
-        camera: {
-          move: cameraMoveSequence[4],
-          focus: cameraFocusSequence[4],
-          intensity: cameraIntensityByTone[input.tone],
-        },
-        transition: transitionSequence[4],
-        template: templateSequence[4],
-        symbol: symbolSequence[4],
-        durationSeconds: 10,
-        eyebrow: "Evidence",
-        headline: "Look for directional proof",
-        body: "Use credible metrics, adoption patterns, or operational signals before making a strong claim.",
-        chartData: [
-          {label: "Reach", value: 64},
-          {label: "Speed", value: 82},
-          {label: "Cost", value: 48},
-          {label: "Trust", value: 70},
-        ],
-        keywords: ["reach", "speed", "cost", "trust"],
-      },
-      {
-        id: "takeaway",
-        visualType: visualSequence[5],
-        layout: layoutSequence[5],
-        motion: motionSequence[5],
-        camera: {
-          move: cameraMoveSequence[5],
-          focus: cameraFocusSequence[5],
-          intensity: cameraIntensityByTone[input.tone],
-        },
-        transition: transitionSequence[5],
-        template: templateSequence[5],
-        symbol: symbolSequence[5],
-        durationSeconds: 12,
-        eyebrow: "Takeaway",
-        headline: "The practical read",
-        body: `${topic} is easiest to explain when the story moves from why now, to how it works, to what action ${audience} should take.`,
-        stat: "3 ideas",
-        keywords: ["why now", "how it works", "what to do"],
-      },
-    ],
+    fontFamily,
+    globalBackground,
+    palette,
+    musicPrompt,
+    speechVoice: input.speechVoice ?? "af_heart",
+    scenes,
   });
 };
+
+export type {StoryboardInput as default};

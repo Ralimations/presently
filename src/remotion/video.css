@@ -5,678 +5,323 @@
 @import "@fontsource-variable/archivo";
 @import "@fontsource-variable/oswald";
 
-:root {
-  font-family: Georgia, "Times New Roman", serif;
-}
+* { box-sizing: border-box; margin: 0; padding: 0; }
 
-* {
-  box-sizing: border-box;
-}
-
+/* ── Video shell ── */
 .video {
   position: relative;
   width: 100%;
   height: 100%;
   overflow: hidden;
-  background:
-    radial-gradient(circle at 12% 18%, color-mix(in srgb, var(--accent) 34%, transparent), transparent 24%),
-    radial-gradient(circle at 82% 20%, color-mix(in srgb, var(--secondary) 28%, transparent), transparent 28%),
-    linear-gradient(135deg, var(--bg), color-mix(in srgb, var(--bg) 82%, var(--fg)));
   color: var(--fg);
 }
 
-.video[data-font="grotesk-serif"] {
-  font-family: "Space Grotesk Variable", Verdana, Geneva, sans-serif;
-}
-
-.video[data-font="editorial-mono"] {
-  font-family: "Newsreader Variable", Georgia, serif;
-}
-
-.video[data-font="geometric-humanist"] {
-  font-family: "Archivo Variable", "Trebuchet MS", Verdana, sans-serif;
-}
-
-.video[data-font="cinematic-condensed"] {
-  font-family: "Oswald Variable", Impact, Haettenschweiler, sans-serif;
-}
-
-.video[data-font="technical-mono"] {
-  font-family: "JetBrains Mono Variable", Consolas, "Courier New", monospace;
-}
-
-.video[data-font="editorial-mono"] .copy h1 {
-  font-family: "Playfair Display Variable", Georgia, serif;
-}
-
-.video[data-font="technical-mono"] .copy h1,
-.video[data-font="technical-mono"] .sceneMeta {
-  font-family: "JetBrains Mono Variable", Consolas, "Courier New", monospace;
-}
-
-.video[data-art="minimal"] {
-  background:
-    linear-gradient(90deg, color-mix(in srgb, var(--fg) 7%, transparent) 1px, transparent 1px),
-    linear-gradient(var(--bg), color-mix(in srgb, var(--bg) 90%, white));
-  background-size: 80px 80px, auto;
-}
-
-.video[data-texture="contour"] .grain {
-  opacity: 0.32;
-  background-image:
-    radial-gradient(ellipse at 20% 40%, transparent 34%, rgba(255, 255, 255, 0.14) 35%, transparent 36%),
-    radial-gradient(ellipse at 72% 62%, transparent 28%, rgba(255, 255, 255, 0.12) 29%, transparent 30%);
-  background-size: 360px 240px, 420px 300px;
-}
-
-.video[data-texture="orbits"] .grain {
-  opacity: 0.3;
-  background-image:
-    radial-gradient(circle, transparent 44%, rgba(255, 255, 255, 0.13) 45%, transparent 46%),
-    radial-gradient(circle, transparent 28%, rgba(255, 255, 255, 0.1) 29%, transparent 30%);
-  background-size: 260px 260px, 160px 160px;
-}
-
-.video[data-texture="clean"] .grain {
-  opacity: 0.08;
-}
-
-.video[data-texture="grid"] .grain {
-  opacity: 0.28;
-}
-
-.video[data-art="technical"] {
-  background:
-    linear-gradient(90deg, color-mix(in srgb, var(--secondary) 18%, transparent) 1px, transparent 1px),
-    linear-gradient(color-mix(in srgb, var(--secondary) 18%, transparent) 1px, transparent 1px),
-    radial-gradient(circle at 78% 18%, color-mix(in srgb, var(--accent) 22%, transparent), transparent 30%),
-    var(--bg);
-  background-size: 64px 64px, 64px 64px, auto, auto;
-}
-
-.video[data-art="cinematic"] {
-  background:
-    linear-gradient(180deg, rgba(0, 0, 0, 0.42), transparent 24%, transparent 76%, rgba(0, 0, 0, 0.48)),
-    radial-gradient(circle at 50% 22%, color-mix(in srgb, var(--accent) 26%, transparent), transparent 34%),
-    var(--bg);
-}
-
-.video[data-art="playful"] {
-  background:
-    radial-gradient(circle at 18% 20%, color-mix(in srgb, var(--accent) 38%, transparent), transparent 18%),
-    radial-gradient(circle at 76% 72%, color-mix(in srgb, var(--secondary) 32%, transparent), transparent 22%),
-    linear-gradient(135deg, var(--bg), color-mix(in srgb, var(--bg) 84%, white));
-}
-
-.grain {
-  position: absolute;
-  inset: 0;
-  opacity: 0.22;
-  background-image:
-    linear-gradient(90deg, rgba(255, 255, 255, 0.08) 1px, transparent 1px),
-    linear-gradient(rgba(255, 255, 255, 0.07) 1px, transparent 1px);
-  background-size: 42px 42px;
-}
-
-.titleRail {
+/* ── Title rail ── */
+.title-rail {
   position: absolute;
   z-index: 3;
-  top: 44px;
-  left: 56px;
-  right: 56px;
+  top: 40px;
+  left: 52px;
+  right: 52px;
   display: flex;
   justify-content: space-between;
-  gap: 28px;
-  font-family: Impact, Haettenschweiler, "Arial Black", sans-serif;
-  font-size: clamp(18px, 1.35vw, 28px);
-  letter-spacing: 0.04em;
+  gap: 24px;
+  font-size: clamp(16px, 1.2vw, 24px);
+  font-weight: 700;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
-}
-
-.scene {
-  position: absolute;
-  inset: 110px 56px 58px;
-  z-index: 2;
-  overflow: hidden;
-  padding: clamp(32px, 5vw, 82px);
-  border: 2px solid color-mix(in srgb, var(--fg) 24%, transparent);
-  border-radius: 42px;
-  background: color-mix(in srgb, var(--bg) 74%, white 10%);
-  box-shadow: 0 32px 120px rgba(0, 0, 0, 0.22);
-}
-
-.cameraLayer {
-  position: relative;
-  z-index: 1;
-  display: flex;
-  flex-direction: column;
-  width: 100%;
-  height: 100%;
-  will-change: transform;
-}
-
-.shapeBackdrop {
-  position: absolute;
-  right: -80px;
-  bottom: -80px;
-  width: min(42vw, 620px);
-  height: min(42vw, 620px);
+  color: var(--fg);
+  opacity: 0.72;
   pointer-events: none;
 }
 
-.sceneMeta {
+/* ── Scene card ── */
+.sc {
+  position: absolute;
+  inset: 88px 44px 48px;
+  z-index: 2;
+  overflow: hidden;
+  padding: clamp(28px, 3.5vw, 60px);
+  border: 1.5px solid color-mix(in srgb, var(--fg) 18%, transparent);
+  border-radius: 36px;
+  box-shadow: 0 28px 100px rgba(0,0,0,0.24);
+  will-change: opacity, transform;
+}
+
+/* ── Camera layer ── */
+.sc-camera {
   position: relative;
-  z-index: 1;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-family: Impact, Haettenschweiler, "Arial Black", sans-serif;
-  font-size: clamp(18px, 1.8vw, 34px);
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--accent);
-}
-
-.sceneGrid {
-  position: relative;
-  z-index: 1;
-  flex: 1;
-  display: grid;
-  grid-template-columns: minmax(0, 1.05fr) minmax(340px, 0.95fr);
-  align-items: center;
-  gap: clamp(34px, 6vw, 98px);
-}
-
-.layout-poster {
-  justify-content: center;
-}
-
-.layout-poster .sceneGrid {
-  grid-template-columns: 1fr;
-  text-align: center;
-}
-
-.layout-poster .copy h1,
-.layout-poster .copy p {
-  max-width: none;
-  margin-left: auto;
-  margin-right: auto;
-}
-
-.layout-poster .orbital,
-.layout-poster .bars,
-.layout-poster .steps {
-  width: min(56%, 720px);
-  margin: 0 auto;
-}
-
-.layout-editorial {
-  background:
-    linear-gradient(90deg, color-mix(in srgb, var(--accent) 18%, transparent), transparent 36%),
-    color-mix(in srgb, var(--bg) 78%, white 12%);
-}
-
-.layout-editorial .sceneGrid {
-  grid-template-columns: 0.78fr 1.22fr;
-}
-
-.layout-editorial .copy {
-  order: 2;
-}
-
-.layout-dashboard .sceneGrid {
-  grid-template-columns: minmax(0, 0.85fr) minmax(380px, 1.15fr);
-}
-
-.layout-dashboard .copy h1 {
-  font-size: clamp(46px, 5.5vw, 98px);
-}
-
-.layout-stacked .sceneGrid {
-  grid-template-columns: 1fr;
-  align-content: center;
-}
-
-.layout-stacked .copy h1 {
-  max-width: 16ch;
-}
-
-.layout-split-card {
-  background:
-    linear-gradient(90deg, color-mix(in srgb, var(--accent) 18%, transparent) 0 50%, color-mix(in srgb, var(--bg) 80%, white 8%) 50% 100%);
-}
-
-.template-kinetic {
-  border-radius: 18px;
-  border-width: 6px;
-}
-
-.template-magazine {
-  border-radius: 0;
-  box-shadow: 18px 18px 0 color-mix(in srgb, var(--accent) 36%, transparent);
-}
-
-.template-product-demo {
-  background:
-    linear-gradient(135deg, color-mix(in srgb, var(--secondary) 16%, transparent), transparent 45%),
-    color-mix(in srgb, var(--bg) 78%, white 12%);
-}
-
-.template-data-room {
-  background:
-    linear-gradient(90deg, color-mix(in srgb, var(--fg) 10%, transparent) 1px, transparent 1px),
-    linear-gradient(color-mix(in srgb, var(--fg) 8%, transparent) 1px, transparent 1px),
-    color-mix(in srgb, var(--bg) 82%, white 8%);
-  background-size: 56px 56px;
-}
-
-.template-cinematic-essay {
-  border-top: 80px solid rgba(0, 0, 0, 0.26);
-  border-bottom: 80px solid rgba(0, 0, 0, 0.26);
-  border-left-width: 0;
-  border-right-width: 0;
-  border-radius: 0;
-}
-
-.symbolMark {
-  display: grid;
-  place-items: center;
   width: 100%;
   height: 100%;
+  display: flex;
+  flex-direction: column;
+  will-change: transform;
 }
 
-.symbolMark svg {
-  width: 58%;
-  height: 58%;
-}
-
-.copy h1 {
-  margin: 0;
-  max-width: 13ch;
-  font-family: Impact, Haettenschweiler, "Arial Black", sans-serif;
-  font-size: clamp(58px, 7.2vw, 132px);
-  line-height: 0.88;
-  letter-spacing: -0.07em;
-  text-transform: uppercase;
-}
-
-.copy p {
-  max-width: 760px;
-  margin: 34px 0 0;
-  font-size: clamp(25px, 2.15vw, 42px);
-  line-height: 1.18;
-}
-
-.orbital {
-  position: relative;
-  display: grid;
-  place-items: center;
-  aspect-ratio: 1;
-  min-height: 420px;
-}
-
-.orbitalRing {
+/* ── Progress bar ── */
+.sc-progress {
   position: absolute;
-  inset: 7%;
-  border: 4px solid var(--secondary);
-  border-radius: 50%;
-  box-shadow: inset 0 0 0 26px color-mix(in srgb, var(--accent) 16%, transparent);
-}
-
-.orbitalCore {
-  z-index: 1;
-  display: grid;
-  place-items: center;
-  width: 58%;
-  aspect-ratio: 1;
-  border-radius: 50%;
-  background: var(--accent);
-  color: var(--bg);
-  font-family: Impact, Haettenschweiler, "Arial Black", sans-serif;
-  font-size: clamp(42px, 6vw, 102px);
-}
-
-.orbitalTag {
-  position: absolute;
-  right: 3%;
-  bottom: 18%;
-  padding: 16px 22px;
-  border-radius: 999px;
-  background: var(--fg);
-  color: var(--bg);
-  font-family: Impact, Haettenschweiler, "Arial Black", sans-serif;
-  font-size: clamp(18px, 1.4vw, 26px);
-  text-transform: uppercase;
-}
-
-.bars {
-  display: grid;
-  gap: 26px;
-}
-
-.barRow {
-  display: grid;
-  grid-template-columns: 120px 1fr 72px;
-  align-items: center;
-  gap: 20px;
-  font-size: clamp(22px, 2vw, 36px);
-}
-
-.barTrack {
-  height: 42px;
+  left: 0; right: 0; bottom: 0;
+  height: 8px;
   overflow: hidden;
-  border: 2px solid var(--fg);
   border-radius: 999px;
+  background: color-mix(in srgb, var(--fg) 12%, transparent);
 }
-
-.barFill {
+.sc-progress span {
+  display: block;
   height: 100%;
   border-radius: inherit;
   background: linear-gradient(90deg, var(--accent), var(--secondary));
 }
 
-.steps {
-  display: grid;
-  gap: 24px;
-}
-
-.step {
-  display: flex;
-  align-items: center;
-  gap: 26px;
-  padding: 28px;
-  border: 2px solid color-mix(in srgb, var(--fg) 40%, transparent);
-  border-radius: 28px;
-  background: color-mix(in srgb, var(--secondary) 12%, transparent);
-}
-
-.step span {
-  color: var(--accent);
-  font-family: Impact, Haettenschweiler, "Arial Black", sans-serif;
-  font-size: clamp(32px, 3vw, 58px);
-}
-
-.step strong {
-  font-family: Impact, Haettenschweiler, "Arial Black", sans-serif;
-  font-size: clamp(30px, 3vw, 62px);
+/* ── Eyebrow ── */
+.sc-eyebrow {
+  position: relative;
+  z-index: 1;
+  margin-bottom: 18px;
+  font-size: clamp(14px, 1.3vw, 22px);
+  font-weight: 700;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
-}
-
-.quoteMark {
   color: var(--accent);
-  font-family: "Archivo Black", Impact, sans-serif;
-  font-size: clamp(280px, 24vw, 520px);
-  line-height: 0.5;
 }
 
-.kineticWords {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 18px;
-  align-content: center;
+/* ── Content grid ── */
+.sc-grid {
+  position: relative;
+  z-index: 1;
+  flex: 1;
+  display: grid;
+  align-items: center;
+  gap: clamp(32px, 5vw, 88px);
 }
 
-.kineticWords span {
-  padding: 18px 24px;
-  border: 3px solid var(--fg);
+/* ── Copy block ── */
+.sc-copy h1 {
+  max-width: 16ch;
+  line-height: 0.94;
+  letter-spacing: -0.03em;
+}
+.sc-copy p {
+  max-width: 680px;
+  margin-top: 20px;
+  line-height: 1.28;
+  opacity: 0.88;
+}
+.sc-stat {
+  display: inline-block;
+  margin-top: 22px;
+  padding: 10px 22px;
   border-radius: 999px;
   background: var(--accent);
-  color: var(--bg);
-  font-family: "Oswald Variable", Impact, sans-serif;
-  font-size: clamp(34px, 4vw, 76px);
-  text-transform: uppercase;
+  color: var(--bg, #111);
+  font-size: clamp(18px, 2vw, 34px);
+  font-weight: 900;
+  letter-spacing: 0.04em;
 }
 
-.diagram {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 26px;
+/* ── Visual area ── */
+.sc-visual {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
 }
 
-.diagramNode {
-  position: relative;
+/* ── Bar chart ── */
+.v-bars { display: grid; gap: 22px; width: 100%; }
+.v-barRow {
   display: grid;
+  grid-template-columns: 110px 1fr 60px;
+  align-items: center;
   gap: 16px;
-  min-height: 210px;
-  padding: 28px;
-  border: 3px solid color-mix(in srgb, var(--fg) 42%, transparent);
-  border-radius: 30px;
-  background: color-mix(in srgb, var(--bg) 72%, white 12%);
+  font-size: clamp(18px, 1.6vw, 30px);
+}
+.v-barTrack {
+  height: 38px;
+  overflow: hidden;
+  border: 1.5px solid var(--fg);
+  border-radius: 999px;
+}
+.v-barFill {
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--accent), var(--secondary));
 }
 
-.diagramNode .symbolMark {
-  width: 74px;
-  height: 74px;
+/* ── Timeline ── */
+.v-timeline { display: grid; gap: 20px; width: 100%; }
+.v-step {
+  display: flex;
+  align-items: center;
+  gap: 22px;
+  padding: 22px 26px;
+  border: 1.5px solid color-mix(in srgb, var(--fg) 36%, transparent);
   border-radius: 24px;
-  background: var(--accent);
-  color: var(--bg);
+  background: color-mix(in srgb, var(--secondary) 10%, transparent);
 }
-
-.diagramNode strong {
-  align-self: end;
-  font-family: "Space Grotesk Variable", Verdana, sans-serif;
-  font-size: clamp(28px, 3vw, 56px);
-  text-transform: uppercase;
-}
-
-.connector {
-  position: absolute;
-  right: -30px;
-  top: 50%;
-  width: 34px;
-  height: 3px;
-  background: var(--accent);
-}
-
-.statWall {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 20px;
-}
-
-.statTile {
-  display: grid;
-  place-items: center;
-  min-height: 190px;
-  padding: 22px;
-  border-radius: 28px;
-  background: var(--fg);
-  color: var(--bg);
-}
-
-.statTile strong {
-  font-family: "Oswald Variable", Impact, sans-serif;
-  font-size: clamp(64px, 8vw, 142px);
-  line-height: 0.8;
-}
-
-.statTile span {
+.v-step span {
   color: var(--accent);
-  font-size: clamp(22px, 2vw, 36px);
+  font-size: clamp(28px, 2.8vw, 52px);
+  font-weight: 900;
+  letter-spacing: -0.02em;
+}
+.v-step strong {
+  font-size: clamp(22px, 2.2vw, 42px);
+  font-weight: 700;
   text-transform: uppercase;
 }
 
-.beforeAfter,
-.mythFact {
+/* ── Comparison ── */
+.v-compare {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 22px;
+  gap: 18px;
+  width: 100%;
 }
-
-.beforeAfter div,
-.mythFact div {
+.v-compare > div {
   display: grid;
   align-content: space-between;
-  min-height: 430px;
-  padding: 34px;
-  border-radius: 34px;
-  border: 3px solid color-mix(in srgb, var(--fg) 30%, transparent);
+  min-height: 380px;
+  padding: 28px;
+  border-radius: 28px;
+  border: 1.5px solid color-mix(in srgb, var(--fg) 24%, transparent);
 }
-
-.beforeAfter div:last-child,
-.mythFact div:last-child {
+.v-compare > div:last-child {
   background: var(--accent);
-  color: var(--bg);
+  color: var(--bg, #111);
+  border-color: transparent;
 }
-
-.beforeAfter span,
-.mythFact span {
-  font-family: "JetBrains Mono Variable", Consolas, monospace;
-  font-size: clamp(20px, 2vw, 34px);
+.v-compare span {
+  font-size: clamp(16px, 1.4vw, 24px);
+  font-weight: 700;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
+  opacity: 0.72;
+}
+.v-compare strong {
+  font-size: clamp(24px, 2.6vw, 46px);
+  font-weight: 700;
+  line-height: 1.1;
 }
 
-.beforeAfter strong,
-.mythFact strong {
-  font-family: "Space Grotesk Variable", Verdana, sans-serif;
-  font-size: clamp(40px, 5vw, 88px);
-  line-height: 0.92;
+/* ── Diagram ── */
+.v-diagram {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
+  width: 100%;
 }
-
-.collage {
-  position: relative;
-  min-height: 560px;
+.v-node {
+  display: grid;
+  gap: 12px;
+  min-height: 180px;
+  padding: 22px;
+  border: 1.5px solid color-mix(in srgb, var(--fg) 36%, transparent);
+  border-radius: 24px;
+  background: color-mix(in srgb, var(--fg) 6%, transparent);
 }
-
-.collageTile {
-  position: absolute;
+.v-nodeNum {
   display: grid;
   place-items: center;
-  gap: 10px;
-  width: 46%;
-  height: 42%;
-  border-radius: 34px;
-  background: color-mix(in srgb, var(--secondary) 24%, white 8%);
-  color: var(--fg);
-  transform: rotate(-4deg);
-}
-
-.collageTile .symbolMark {
-  width: 96px;
-  height: 96px;
-}
-
-.collageTile span {
-  font-size: clamp(22px, 2vw, 38px);
-  text-transform: uppercase;
-}
-
-.tile-1 {
-  left: 0;
-  top: 0;
-}
-
-.tile-2 {
-  right: 5%;
-  top: 8%;
-  transform: rotate(5deg);
-}
-
-.tile-3 {
-  left: 10%;
-  bottom: 0;
-  transform: rotate(3deg);
-}
-
-.tile-4 {
-  right: 0;
-  bottom: 5%;
-  transform: rotate(-3deg);
-}
-
-.mapLike {
-  position: relative;
-  min-height: 540px;
-  overflow: hidden;
-  border: 3px solid color-mix(in srgb, var(--fg) 24%, transparent);
-  border-radius: 42px;
-  background:
-    radial-gradient(circle at 30% 30%, color-mix(in srgb, var(--accent) 18%, transparent), transparent 20%),
-    radial-gradient(circle at 70% 66%, color-mix(in srgb, var(--secondary) 22%, transparent), transparent 22%),
-    color-mix(in srgb, var(--bg) 80%, white 8%);
-}
-
-.mapPath {
-  position: absolute;
-  left: 12%;
-  top: 48%;
-  width: 76%;
-  height: 5px;
-  background: var(--accent);
-  transform: rotate(-12deg);
-}
-
-.mapPin {
-  position: absolute;
-  display: grid;
-  gap: 8px;
-  min-width: 150px;
-}
-
-.mapPin span {
-  display: grid;
-  place-items: center;
-  width: 58px;
-  height: 58px;
+  width: 52px;
+  height: 52px;
   border-radius: 50%;
-  background: var(--fg);
-  color: var(--bg);
-  font-family: "Oswald Variable", Impact, sans-serif;
-  font-size: 28px;
+  background: var(--accent);
+  color: var(--bg, #111);
+  font-size: 22px;
+  font-weight: 900;
 }
-
-.mapPin strong {
-  font-size: clamp(18px, 1.6vw, 30px);
+.v-node strong {
+  font-size: clamp(20px, 2vw, 36px);
+  font-weight: 700;
   text-transform: uppercase;
 }
 
-.pin-1 {
-  left: 10%;
-  top: 20%;
+/* ── Stat wall ── */
+.v-statWall {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+  width: 100%;
+}
+.v-statTile {
+  display: grid;
+  place-items: center;
+  min-height: 160px;
+  padding: 18px;
+  border-radius: 22px;
+  background: var(--fg);
+  color: var(--bg, #111);
+}
+.v-statTile strong {
+  font-size: clamp(52px, 7vw, 120px);
+  font-weight: 900;
+  line-height: 0.85;
+}
+.v-statTile span {
+  font-size: clamp(16px, 1.4vw, 24px);
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--accent);
 }
 
-.pin-2 {
-  left: 44%;
-  top: 34%;
+/* ── Hero stat ── */
+.v-heroStat {
+  display: grid;
+  place-items: center;
+  gap: 12px;
+  text-align: center;
+}
+.v-heroStat strong {
+  font-size: clamp(80px, 11vw, 200px);
+  font-weight: 900;
+  line-height: 0.85;
+  color: var(--accent);
+  letter-spacing: -0.04em;
+}
+.v-heroStat span {
+  font-size: clamp(18px, 1.6vw, 28px);
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  opacity: 0.72;
 }
 
-.pin-3 {
-  right: 10%;
-  bottom: 18%;
+/* ── Quote ── */
+.v-quote {
+  font-size: clamp(200px, 20vw, 440px);
+  font-weight: 900;
+  line-height: 0.5;
+  color: var(--accent);
+  opacity: 0.72;
+  user-select: none;
 }
 
-.pin-4 {
-  left: 24%;
-  bottom: 12%;
+/* ── Kinetic text ── */
+.v-kinetic {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  align-content: center;
+  justify-content: center;
+}
+.v-kinetic span {
+  padding: 14px 20px;
+  border: 2px solid var(--fg);
+  border-radius: 999px;
+  background: var(--accent);
+  color: var(--bg, #111);
+  font-size: clamp(28px, 3.5vw, 64px);
+  font-weight: 900;
+  text-transform: uppercase;
 }
 
+/* ── Vertical (9:16) adjustments ── */
 @media (max-aspect-ratio: 1/1) {
-  .titleRail {
-    left: 42px;
-    right: 42px;
-    font-size: 24px;
-  }
-
-  .scene {
-    inset: 108px 36px 44px;
-    padding: 44px;
-  }
-
-  .sceneGrid {
-    grid-template-columns: 1fr;
-    gap: 42px;
-  }
-
-  .copy h1 {
-    max-width: 9ch;
-    font-size: clamp(62px, 11vw, 128px);
-  }
-
-  .copy p {
-    font-size: clamp(29px, 4.2vw, 48px);
-  }
-
-  .orbital {
-    min-height: 360px;
-  }
+  .title-rail { left: 36px; right: 36px; font-size: 22px; }
+  .sc { inset: 100px 32px 42px; padding: 40px; }
+  .sc-grid { grid-template-columns: 1fr !important; gap: 36px; }
+  .sc-copy h1 { max-width: 9ch; font-size: clamp(56px, 10vw, 120px); }
+  .sc-copy p { font-size: clamp(26px, 3.8vw, 44px); }
 }

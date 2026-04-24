@@ -14,6 +14,7 @@
     "still": "remotion still InfographicMinute public/output/stills/frame.png --frame=90 --scale=0.25",
     "storyboard": "tsx scripts/create-storyboard.ts",
     "music:placeholder": "tsx scripts/create-placeholder-music.ts",
+    "music:local": "tsx scripts/create-music.ts",
     "assets:install": "npm install lucide-react react-icons @remotion/transitions@4.0.341 @remotion/shapes@4.0.341 @remotion/noise@4.0.341 @remotion/layout-utils@4.0.341 @remotion/motion-blur@4.0.341 @fontsource-variable/space-grotesk @fontsource-variable/newsreader @fontsource-variable/jetbrains-mono @fontsource-variable/playfair-display @fontsource-variable/archivo @fontsource-variable/oswald"
   },
   "dependencies": {
@@ -29,7 +30,7 @@
     "@remotion/player": "4.0.341",
     "@remotion/shapes": "^4.0.341",
     "@remotion/transitions": "^4.0.341",
-    "lucide-react": "^1.8.0",
+    "lucide-react": "^1.9.0",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
     "react-icons": "^5.6.0",
